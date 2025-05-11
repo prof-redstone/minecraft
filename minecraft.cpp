@@ -1,247 +1,182 @@
-#define GLEW_STATIC
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <sstream>
-#include "stb_image.h"
+#include <vector>
+#include "render.hpp"
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-    glViewport(0, 0, width, height);
-}
+#define sizeChunk 5
+using namespace std;
 
-void processInput(GLFWwindow* window)
-{
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS){
-        glfwSetWindowShouldClose(window, true);
-    }
-    
-}
+std::vector<float> addTopFace(float x, float y, float z, float ou, float ov, float s) {
+    return {
+        x, y, z, ou, ov+s,//facing top
+        x, y, z+1, ou + s, ov + s,
+        x+1, y, z+1, ou + s, ov,
 
-char* charger_shader(const char* filePath) {
-    std::ifstream shaderFile(filePath);
-    if (!shaderFile.is_open()) {
-        std::cerr << "Erreur : impossible d'ouvrir le fichier shader " << filePath << std::endl;
-        return nullptr;
-    }
-
-    std::stringstream buffer;
-    buffer << shaderFile.rdbuf();
-    std::string shaderCode = buffer.str();
-
-    // Allouer dynamiquement la mémoire pour la chaîne de caractères
-    char* shaderSource = new char[shaderCode.size() + 1];
-    std::copy(shaderCode.begin(), shaderCode.end(), shaderSource);
-    shaderSource[shaderCode.size()] = '\0'; // Terminaison avec '\0'
-
-    return shaderSource;
-}
-
-int main()
-{
-    std::cout << "hello" << std::endl;
-    GLFWwindow* window;
-
-    /* Initialize the library */
-    if (!glfwInit()) return -1;
-
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(800, 600, "Hello World", NULL, NULL);
-    if (!window) {
-        glfwTerminate();
-        return -1;
-    }
-    /* Make the window's context current */
-    glfwMakeContextCurrent(window); 
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback); 
-    glViewport(0, 0, 800, 600);
-
-    if (glewInit() != GLEW_OK) {
-        std::cout << "ERROR GLEW" << std::endl;
-    }
-
-    char* vertexShaderSource = charger_shader("Vertex.glsl");
-    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-
-
-    char* fragmentShaderSource = charger_shader("Frag.glsl");
-    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-
-    unsigned int shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    glUseProgram(shaderProgram); 
-    glDeleteShader(vertexShader);//cleaning
-    glDeleteShader(fragmentShader);
-
-
-    glEnable(GL_DEPTH_TEST);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-    float vertices[] = {
-        // positions          // colors           // texture coords
-         0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
-         0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
-        -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
-        -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
+        x, y, z, ou, ov + s,
+        x + 1, y, z+1, ou + s, ov,
+        x + 1, y, z, ou, ov
     };
-    //unsigned int indices[] = {0,1,2};
-    unsigned int indices[] = {  // note that we start from 0!
-        0, 1, 3,   // first triangle
-        1, 2, 3    // second triangle
+}
+
+std::vector<float> addBottomFace(float x, float y, float z, float ou, float ov, float s) {
+    return {
+        x + 1, y, z,     ou,     ov + s,
+        x + 1, y, z + 1,   ou + s, ov + s,
+        x, y, z + 1,     ou + s, ov,
+
+        x + 1, y, z,     ou,     ov + s,
+        x, y, z + 1,     ou + s, ov,
+        x, y, z,       ou,     ov
     };
+}
 
-    unsigned int VBO, EBO, VAO;
+std::vector<float> addXPosFace(float x, float y, float z, float ou, float ov, float s) {
+    return {
+        x, y, z, ou, ov + s,
+        x, y + 1, z, ou, ov,    
+        x, y + 1, z + 1, ou + s, ov,      
 
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
+        x, y, z,ou,ov + s,
+        x, y + 1, z + 1, ou + s, ov, 
+        x, y, z + 1, ou + s, ov + s
+    };
+}
 
-    // Configurer le VAO
-    glBindVertexArray(VAO);
+std::vector<float> addXNegFace(float x, float y, float z, float ou, float ov, float s) {
+    return {
+        x, y,   z + 1,     ou,     ov + s,
+        x, y + 1, z + 1,     ou,     ov,
+        x, y + 1, z,       ou + s, ov,
 
-    // Copier les données dans le VBO
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+        x, y,   z + 1,     ou,     ov + s,
+        x, y + 1, z,       ou + s, ov,
+        x, y,   z,       ou + s, ov + s
+    };
+}
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+std::vector<float> addZPosFace(float x, float y, float z, float ou, float ov, float s) {
+    return {
+        x,   y,   z,       ou,     ov + s,
+        x + 1, y,   z,       ou + s, ov + s,
+        x + 1, y + 1, z,       ou + s, ov,
 
-    // Configurer les attributs de vertex
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    // color attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-    //texture coord
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
+        x,   y,   z,       ou,     ov + s,
+        x + 1, y + 1, z,       ou + s, ov,
+        x,   y + 1, z,       ou,     ov
+    };
+}
 
-    unsigned int texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    // set the texture wrapping/filtering options (on the currently bound texture object)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // load and generate the texture
-    int width, height, nrChannels;
-    unsigned char* data = stbi_load("sources/container.jpg", &width, &height, &nrChannels, 0);
-    if (data){
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
+std::vector<float> addZNegFace(float x, float y, float z, float ou, float ov, float s) {
+    return {
+        x + 1, y,   z,       ou,     ov + s,
+        x,   y,   z,       ou + s, ov + s,
+        x,   y + 1, z,       ou + s, ov,
+
+        x + 1, y,   z,       ou,     ov + s,
+        x,   y + 1, z,       ou + s, ov,
+        x + 1, y + 1, z,       ou,     ov
+    };
+}
+
+vector<float> getTexture(unsigned int x) {
+    if (x == 0) {
+        return { 0.0,0.0 };
+    }if (x == 1) {
+        return { 0.25,0.0 };
+    }if (x == 2) {
+        return { 0.5,0.0 };
+    }if (x == 3) {
+        return { 0.75,0.0 };
+    }if (x == 4) {
+        return { 0.0,0.25 };
+    }if (x == 6) {
+        return { 0.25,0.25 };
     }
-    else{std::cout << "Failed to load texture" << std::endl;}
-    stbi_image_free(data);
+}
 
-    glBindVertexArray(0);// Désactiver le VAO pour éviter des modifications accidentelles
+vector<bool> placeFacesQ(vector<vector<vector<int>>>& tab, int x, int y, int z) {
+    vector<bool> rez = { false, false, false, false, false, false };
+    if (tab[x][y][z] == -1) return rez;
+    if (x == 0 || tab[x - 1][y][z] == -1) rez[0] = true;
+    if (x == sizeChunk - 1 || tab[x + 1][y][z] == -1) rez[1] = true;
 
+    if (y == 0 || tab[x][y - 1][z] == -1) rez[2] = true;
+    if (y == sizeChunk - 1 || tab[x][y + 1][z] == -1) rez[3] = true;
 
-    glm::vec3 cameraPos = glm::vec3(0.0f, 1.0f, 3.0f);
-    glm::vec3 cameraDir = glm::vec3(0.0f, 0.0f, -1.0f);
-    glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-    float yaw = -90.0f;
-    float pitch = 0.0f;
-    float deltaTime = 0.0f;	// Time between current frame and last frame
-    float lastFrame = 0.0f; // Time of last frame
-    float currentFrame = glfwGetTime();
-    deltaTime = currentFrame - lastFrame;
-    lastFrame = currentFrame;
+    if (z == 0 || tab[x][y][z - 1] == -1) rez[4] = true;
+    if (z == sizeChunk - 1 || tab[x][y][z + 1] == -1) rez[5] = true;
 
-    while (!glfwWindowShouldClose(window))
-    {
-        processInput(window);
+    return rez;
+}
 
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+int main() {
+    std::cout << "Minecraft\n";
+    SetupRender("Minecraft");
 
-        /*glUseProgram(shaderProgram);
-        float timeValue = glfwGetTime();
-        float greenValue = sin(timeValue) / 2.0f + 0.5f;
-        int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
-        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);*/
+    std::vector<float> worldMesh;
 
-
-        /*glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glUseProgram(shaderProgram);
-        glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        glBindVertexArray(0);*/
-
-        currentFrame = glfwGetTime();
-        deltaTime = currentFrame - lastFrame;
-        lastFrame = currentFrame;
-        const float cameraSpeed = 2.5f * deltaTime; // adjust accordingly
-
-
-        if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-            pitch += 0.5f;
-        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-            pitch += -0.5f;
-
-        glm::vec3 direction;
-        direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-        direction.y = sin(glm::radians(pitch));
-        direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-        cameraDir = glm::normalize(direction);
-
-        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-            cameraPos += cameraSpeed * cameraDir;
-        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-            cameraPos -= cameraSpeed * cameraDir;
-        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-            cameraPos -= glm::normalize(glm::cross(cameraDir, cameraUp)) * cameraSpeed;
-        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-            cameraPos += glm::normalize(glm::cross(cameraDir, cameraUp)) * cameraSpeed;
-
-        glm::mat4 view;
-        view = glm::lookAt(cameraPos, cameraPos + cameraDir, cameraUp);
-        //glm::mat4 view = glm::mat4(1.0f);
-        //view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-
-        glm::mat4 projection;
-        projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-
-        int modelLoc = glGetUniformLocation(shaderProgram, "model");
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-        int viewLoc = glGetUniformLocation(shaderProgram, "view");
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-        int projectionLoc = glGetUniformLocation(shaderProgram, "projection");
-        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-
-
-
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-
-
-        glfwSwapBuffers(window);
-        glfwPollEvents();
+    vector<vector<vector<int>>> chunk(sizeChunk, vector<vector<int>>(sizeChunk, vector<int>(sizeChunk, 0)));
+    for (int i = 0; i < sizeChunk; ++i) {
+        for (int j = 0; j < sizeChunk; ++j) {
+            for (int k = 0; k < sizeChunk; ++k) {
+                chunk[i][j].push_back(static_cast<int>(k));
+            }
+        }
+    }
+    chunk[4][4][4] = -1;
+    for (int i = 0; i < sizeChunk; ++i) {
+        for (int j = 0; j < sizeChunk; ++j) {
+            for (int k = 0; k < sizeChunk; ++k) {
+                vector<float> uv = getTexture(k);
+                vector<bool> rez = placeFacesQ(chunk, i,j,k);
+                std::vector<float> face;
+                if (rez[2]) {
+                    face = addBottomFace(i, j, k, uv[0], uv[1], 0.25);
+                    worldMesh.insert(worldMesh.end(), face.begin(), face.end());
+                }
+                if (rez[3]) {
+                    face = addTopFace(i, j+1, k, uv[0], uv[1], 0.25);
+                    worldMesh.insert(worldMesh.end(), face.begin(), face.end());
+                }
+                if (rez[1]) {
+                    face = addXPosFace(i+1, j, k, uv[0], uv[1], 0.25);
+                    worldMesh.insert(worldMesh.end(), face.begin(), face.end());
+                }
+                if (rez[0]) {
+                    face = addXNegFace(i, j, k, uv[0], uv[1], 0.25);
+                    worldMesh.insert(worldMesh.end(), face.begin(), face.end());
+                }
+                if (rez[5]) {
+                    face = addZPosFace(i, j, k+1, uv[0], uv[1], 0.25);
+                    worldMesh.insert(worldMesh.end(), face.begin(), face.end());
+                }
+                if (rez[4]) {
+                    face = addZNegFace(i, j, k, uv[0], uv[1], 0.25);
+                    worldMesh.insert(worldMesh.end(), face.begin(), face.end());
+                }
+            }
+        }
     }
 
+    Mesh* mesh = setupMeshTexture(worldMesh);
+    setMeshTextureFile(mesh, "sources/textures/all.png");
 
-    glfwTerminate();
+
+
+
+
+
+    Light* sun = createLight(DIRECTIONAL, true);
+    setLightColor(sun, glm::vec3(1.0, 1.0, 1.0));
+    setLightIntensity(sun, 1.0);
+
+
+    while (shouldCloseTheApp()) {
+        renderScene();
+    }
+    terminateRender();
     return 0;
 }
-
