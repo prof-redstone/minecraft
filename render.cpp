@@ -360,8 +360,8 @@ void renderScene() {
     float currentFrame = static_cast<float>(glfwGetTime());
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
-    calculerEtAfficherMoyenneFPS(1.0 / deltaTime, 60);
-    //std::cout << 1.0 / deltaTime << std::endl;
+    //calculerEtAfficherMoyenneFPS(1.0 / deltaTime, 60);
+    //std::cout <<  deltaTime << std::endl;
 
 
     processInput(window);

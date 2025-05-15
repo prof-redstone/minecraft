@@ -6,7 +6,7 @@
 #include <vector>
 #include "render.hpp"
 
-#define sizeChunk 10
+#define sizeChunk 100
 using namespace std;
 
 int textureMapWidth = 4;
@@ -21,79 +21,71 @@ vector<vector<int>> faceCorrespondence = {
     {6, 6, 6, 6, 6, 6}
 };
 
-std::vector<float> addTopFace(float x, float y, float z, float ou, float ov, float s) {
-    return {
-        x, y, z, ou, ov+s,//facing top
-        x, y, z+1, ou + s, ov + s,
-        x+1, y, z+1, ou + s, ov,
-
+void addTopFace(vector<float>& mesh, float x, float y, float z, float ou, float ov, float s) {
+    mesh.insert(mesh.end(), {
         x, y, z, ou, ov + s,
-        x + 1, y, z+1, ou + s, ov,
+        x, y, z + 1, ou + s, ov + s,
+        x + 1, y, z + 1, ou + s, ov,
+        x, y, z, ou, ov + s,
+        x + 1, y, z + 1, ou + s, ov,
         x + 1, y, z, ou, ov
-    };
+        });
 }
 
-std::vector<float> addBottomFace(float x, float y, float z, float ou, float ov, float s) {
-    return {
-        x + 1, y, z,     ou,     ov + s,
-        x + 1, y, z + 1,   ou + s, ov + s,
-        x, y, z + 1,     ou + s, ov,
-
-        x + 1, y, z,     ou,     ov + s,
-        x, y, z + 1,     ou + s, ov,
-        x, y, z,       ou,     ov
-    };
+void addBottomFace(vector<float>& mesh, float x, float y, float z, float ou, float ov, float s) {
+    mesh.insert(mesh.end(), {
+        x + 1, y, z, ou, ov + s,
+        x + 1, y, z + 1, ou + s, ov + s,
+        x, y, z + 1, ou + s, ov,
+        x + 1, y, z, ou, ov + s,
+        x, y, z + 1, ou + s, ov,
+        x, y, z, ou, ov
+        });
 }
 
-std::vector<float> addXPosFace(float x, float y, float z, float ou, float ov, float s) {
-    return {
+void addXPosFace(vector<float>& mesh, float x, float y, float z, float ou, float ov, float s) {
+    mesh.insert(mesh.end(), {
         x, y, z, ou, ov + s,
-        x, y + 1, z, ou, ov,    
-        x, y + 1, z + 1, ou + s, ov,      
-
-        x, y, z,ou,ov + s,
-        x, y + 1, z + 1, ou + s, ov, 
+        x, y + 1, z, ou, ov,
+        x, y + 1, z + 1, ou + s, ov,
+        x, y, z, ou, ov + s,
+        x, y + 1, z + 1, ou + s, ov,
         x, y, z + 1, ou + s, ov + s
-    };
+        });
 }
 
-std::vector<float> addXNegFace(float x, float y, float z, float ou, float ov, float s) {
-    return {
-        x, y,   z + 1,     ou,     ov + s,
-        x, y + 1, z + 1,     ou,     ov,
-        x, y + 1, z,       ou + s, ov,
-
-        x, y,   z + 1,     ou,     ov + s,
-        x, y + 1, z,       ou + s, ov,
-        x, y,   z,       ou + s, ov + s
-    };
+void addXNegFace(vector<float>& mesh, float x, float y, float z, float ou, float ov, float s) {
+    mesh.insert(mesh.end(), {
+        x, y, z + 1, ou, ov + s,
+        x, y + 1, z + 1, ou, ov,
+        x, y + 1, z, ou + s, ov,
+        x, y, z + 1, ou, ov + s,
+        x, y + 1, z, ou + s, ov,
+        x, y, z, ou + s, ov + s
+        });
 }
 
-std::vector<float> addZPosFace(float x, float y, float z, float ou, float ov, float s) {
-    return {
-        x,   y,   z,       ou,     ov + s,
-        x + 1, y,   z,       ou + s, ov + s,
-        x + 1, y + 1, z,       ou + s, ov,
-
-        x,   y,   z,       ou,     ov + s,
-        x + 1, y + 1, z,       ou + s, ov,
-        x,   y + 1, z,       ou,     ov
-    };
+void addZPosFace(vector<float>& mesh, float x, float y, float z, float ou, float ov, float s) {
+    mesh.insert(mesh.end(), {
+        x, y, z, ou, ov + s,
+        x + 1, y, z, ou + s, ov + s,
+        x + 1, y + 1, z, ou + s, ov,
+        x, y, z, ou, ov + s,
+        x + 1, y + 1, z, ou + s, ov,
+        x, y + 1, z, ou, ov
+        });
 }
 
-std::vector<float> addZNegFace(float x, float y, float z, float ou, float ov, float s) {
-    return {
-        x + 1, y,   z,       ou,     ov + s,
-        x,   y,   z,       ou + s, ov + s,
-        x,   y + 1, z,       ou + s, ov,
-
-        x + 1, y,   z,       ou,     ov + s,
-        x,   y + 1, z,       ou + s, ov,
-        x + 1, y + 1, z,       ou,     ov
-    };
+void addZNegFace(vector<float>& mesh, float x, float y, float z, float ou, float ov, float s) {
+    mesh.insert(mesh.end(), {
+        x + 1, y, z, ou, ov + s,
+        x, y, z, ou + s, ov + s,
+        x, y + 1, z, ou + s, ov,
+        x + 1, y, z, ou, ov + s,
+        x, y + 1, z, ou + s, ov,
+        x + 1, y + 1, z, ou, ov
+        });
 }
-
-
 
 vector<float> getFaceUV(int bloc, int face) {
     if (bloc >= faceCorrespondence.size()) bloc = 0;
@@ -103,11 +95,13 @@ vector<float> getFaceUV(int bloc, int face) {
 }
 
 int main() {
-    std::cout << "Minecraft\n";
+    std::cout << "1\n";
     SetupRender("Minecraft");
 
     std::vector<float> worldMesh;
     std::vector<float> transpMesh;
+    worldMesh.reserve(sizeChunk * sizeChunk * sizeChunk * 6 * 30); // estimation
+    transpMesh.reserve(sizeChunk * sizeChunk * sizeChunk * 30);
 
     vector<vector<vector<int>>> chunk(sizeChunk, vector<vector<int>>(sizeChunk, vector<int>(sizeChunk, 0)));
     for (int i = 0; i < sizeChunk; ++i) {
@@ -130,71 +124,66 @@ int main() {
 
                 if (i == 0 || chunk[i - 1][j][k] == -1) {
                     vector<float> faceUV = getFaceUV(chunk[i][j][k], 0);
-                    vector<float> face = addXNegFace(i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                     if (chunk[i][j][k] != 2) {
-                        worldMesh.insert(worldMesh.end(), face.begin(), face.end());
+                        addXNegFace(worldMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                     }else {
-                        transpMesh.insert(transpMesh.end(), face.begin(), face.end());
+                        addXNegFace(transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                     }
                 }
                 if (i == sizeChunk - 1 || chunk[i + 1][j][k] == -1) {
                     vector<float> faceUV = getFaceUV(chunk[i][j][k], 1);
-                    vector<float> face = addXPosFace(i+1, j, k, faceUV[0], faceUV[1], faceUV[2]);
                     if (chunk[i][j][k] != 2) {
-                        worldMesh.insert(worldMesh.end(), face.begin(), face.end());
+                        addXPosFace(worldMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
                     }
                     else {
-                        transpMesh.insert(transpMesh.end(), face.begin(), face.end());
+                        addXPosFace(transpMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
                     }
                 }
                 if (j == 0 || chunk[i][j - 1][k] == -1) {
                     vector<float> faceUV = getFaceUV(chunk[i][j][k], 2);
-                    vector<float> face = addBottomFace(i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                     if (chunk[i][j][k] != 2) {
-                        worldMesh.insert(worldMesh.end(), face.begin(), face.end());
+                        addBottomFace(worldMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                     }
                     else {
-                        transpMesh.insert(transpMesh.end(), face.begin(), face.end());
+                        addBottomFace(transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                     }
                 }
                 if (j == sizeChunk - 1 || chunk[i][j + 1][k] == -1) {
                     vector<float> faceUV = getFaceUV(chunk[i][j][k], 3);
-                    vector<float> face = addTopFace(i, j+1, k, faceUV[0], faceUV[1], faceUV[2]);
                     if (chunk[i][j][k] != 2) {
-                        worldMesh.insert(worldMesh.end(), face.begin(), face.end());
+                        addTopFace(worldMesh, i, j + 1, k, faceUV[0], faceUV[1], faceUV[2]);
                     }
                     else {
-                        transpMesh.insert(transpMesh.end(), face.begin(), face.end());
+                        addTopFace(transpMesh, i, j + 1, k, faceUV[0], faceUV[1], faceUV[2]);
                     }
                 }
                 if (k == 0 || chunk[i][j][k - 1] == -1) {
                     vector<float> faceUV = getFaceUV(chunk[i][j][k], 4);
-                    vector<float> face = addZNegFace(i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                     if (chunk[i][j][k] != 2) {
-                        worldMesh.insert(worldMesh.end(), face.begin(), face.end());
+                        addZNegFace(worldMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                     }
                     else {
-                        transpMesh.insert(transpMesh.end(), face.begin(), face.end());
+                        addZNegFace(transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                     }
                 }
                 if (k == sizeChunk - 1 || chunk[i][j][k + 1] == -1) {
                     vector<float> faceUV = getFaceUV(chunk[i][j][k], 5);
-                    vector<float> face = addZPosFace(i, j, k+1, faceUV[0], faceUV[1], faceUV[2]);
                     if (chunk[i][j][k] != 2) {
-                        worldMesh.insert(worldMesh.end(), face.begin(), face.end());
+                        addZPosFace(worldMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
                     }
                     else {
-                        transpMesh.insert(transpMesh.end(), face.begin(), face.end());
+                        addZPosFace(transpMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
                     }
                 }
             }
         }
     }
-
+    cout << 2 << endl;
     Mesh* mesh = setupMeshTexture(worldMesh);
     setMeshTextureFile(mesh, "sources/textures/all.png");
     Mesh* mesh2 = setupMeshTexture(transpMesh);
     setMeshTextureFile(mesh2, "sources/textures/all.png");
+    cout << 3 << endl;
 
 
 

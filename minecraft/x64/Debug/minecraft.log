@@ -22,7 +22,4 @@ C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(172,
 C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(182,61): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
 C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(182,57): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
 C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(182,54): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
-glew32s.lib(glew.obj) : warning LNK4099: PDB '' n'a pu être trouvé avec 'glew32s.lib(glew.obj)' ou sur '' ; l'objet sera lié sans informations de débogage
-LINK : warning LNK4098: conflit entre la bibliothèque par défaut 'MSVCRT' et les autres bibliothèques ; utilisez /NODEFAULTLIB:library
-LINK : warning LNK4098: conflit entre la bibliothèque par défaut 'LIBCMT' et les autres bibliothèques ; utilisez /NODEFAULTLIB:library
   minecraft.vcxproj -> C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\x64\Debug\minecraft.exe
