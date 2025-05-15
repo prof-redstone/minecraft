@@ -17,6 +17,14 @@
   <ItemGroup>
     <None Include="Vertex.glsl" />
     <None Include="Frag.glsl" />
+    <None Include="sources\shaders\DepthShadowFrag.glsl" />
+    <None Include="sources\shaders\DepthShadowVertex.glsl" />
+    <None Include="sources\shaders\LightFrag.glsl" />
+    <None Include="sources\shaders\LightVertex.glsl" />
+    <None Include="sources\shaders\MainFrag.glsl" />
+    <None Include="sources\shaders\MainVertex.glsl" />
+    <None Include="sources\shaders\SkyboxFrag.glsl" />
+    <None Include="sources\shaders\SkyboxVertex.glsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="minecraft.cpp">

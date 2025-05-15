@@ -6,8 +6,20 @@
 #include <vector>
 #include "render.hpp"
 
-#define sizeChunk 5
+#define sizeChunk 10
 using namespace std;
+
+int textureMapWidth = 4;
+
+vector<vector<int>> faceCorrespondence = {
+    {0, 0, 0, 0, 0, 0},
+    {1, 1, 1, 1, 1, 1},
+    {2, 2, 2, 2, 2, 2},
+    {3, 3, 3, 3, 3, 3},
+
+    {4, 4, 4, 5, 4, 4},
+    {6, 6, 6, 6, 6, 6}
+};
 
 std::vector<float> addTopFace(float x, float y, float z, float ou, float ov, float s) {
     return {
@@ -81,34 +93,12 @@ std::vector<float> addZNegFace(float x, float y, float z, float ou, float ov, fl
     };
 }
 
-vector<float> getTexture(unsigned int x) {
-    if (x == 0) {
-        return { 0.0,0.0 };
-    }if (x == 1) {
-        return { 0.25,0.0 };
-    }if (x == 2) {
-        return { 0.5,0.0 };
-    }if (x == 3) {
-        return { 0.75,0.0 };
-    }if (x == 4) {
-        return { 0.0,0.25 };
-    }if (x == 6) {
-        return { 0.25,0.25 };
-    }
-}
 
-vector<bool> placeFacesQ(vector<vector<vector<int>>>& tab, int x, int y, int z) {
-    vector<bool> rez = { false, false, false, false, false, false };
-    if (tab[x][y][z] == -1) return rez;
-    if (x == 0 || tab[x - 1][y][z] == -1) rez[0] = true;
-    if (x == sizeChunk - 1 || tab[x + 1][y][z] == -1) rez[1] = true;
 
-    if (y == 0 || tab[x][y - 1][z] == -1) rez[2] = true;
-    if (y == sizeChunk - 1 || tab[x][y + 1][z] == -1) rez[3] = true;
-
-    if (z == 0 || tab[x][y][z - 1] == -1) rez[4] = true;
-    if (z == sizeChunk - 1 || tab[x][y][z + 1] == -1) rez[5] = true;
-
+vector<float> getFaceUV(int bloc, int face) {
+    if (bloc >= faceCorrespondence.size()) bloc = 0;
+    int textureCo = faceCorrespondence[bloc][face];
+    vector<float> rez = { (float)(textureCo % textureMapWidth)/textureMapWidth,(float)(textureCo / textureMapWidth) / textureMapWidth,1.0f / textureMapWidth };
     return rez;
 }
 
@@ -117,45 +107,85 @@ int main() {
     SetupRender("Minecraft");
 
     std::vector<float> worldMesh;
+    std::vector<float> transpMesh;
 
     vector<vector<vector<int>>> chunk(sizeChunk, vector<vector<int>>(sizeChunk, vector<int>(sizeChunk, 0)));
     for (int i = 0; i < sizeChunk; ++i) {
         for (int j = 0; j < sizeChunk; ++j) {
             for (int k = 0; k < sizeChunk; ++k) {
-                chunk[i][j].push_back(static_cast<int>(k));
+                chunk[i][j][k] = k%5;
+                if ((i + j + k) % 2 == 0) {
+                    chunk[i][j][k] = -1;
+                }
             }
         }
     }
-    chunk[4][4][4] = -1;
+    //chunk[4][4][4] = -1;
+
     for (int i = 0; i < sizeChunk; ++i) {
         for (int j = 0; j < sizeChunk; ++j) {
             for (int k = 0; k < sizeChunk; ++k) {
-                vector<float> uv = getTexture(k);
-                vector<bool> rez = placeFacesQ(chunk, i,j,k);
-                std::vector<float> face;
-                if (rez[2]) {
-                    face = addBottomFace(i, j, k, uv[0], uv[1], 0.25);
-                    worldMesh.insert(worldMesh.end(), face.begin(), face.end());
+
+                if (chunk[i][j][k] == -1) continue;
+
+                if (i == 0 || chunk[i - 1][j][k] == -1) {
+                    vector<float> faceUV = getFaceUV(chunk[i][j][k], 0);
+                    vector<float> face = addXNegFace(i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                    if (chunk[i][j][k] != 2) {
+                        worldMesh.insert(worldMesh.end(), face.begin(), face.end());
+                    }else {
+                        transpMesh.insert(transpMesh.end(), face.begin(), face.end());
+                    }
                 }
-                if (rez[3]) {
-                    face = addTopFace(i, j+1, k, uv[0], uv[1], 0.25);
-                    worldMesh.insert(worldMesh.end(), face.begin(), face.end());
+                if (i == sizeChunk - 1 || chunk[i + 1][j][k] == -1) {
+                    vector<float> faceUV = getFaceUV(chunk[i][j][k], 1);
+                    vector<float> face = addXPosFace(i+1, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                    if (chunk[i][j][k] != 2) {
+                        worldMesh.insert(worldMesh.end(), face.begin(), face.end());
+                    }
+                    else {
+                        transpMesh.insert(transpMesh.end(), face.begin(), face.end());
+                    }
                 }
-                if (rez[1]) {
-                    face = addXPosFace(i+1, j, k, uv[0], uv[1], 0.25);
-                    worldMesh.insert(worldMesh.end(), face.begin(), face.end());
+                if (j == 0 || chunk[i][j - 1][k] == -1) {
+                    vector<float> faceUV = getFaceUV(chunk[i][j][k], 2);
+                    vector<float> face = addBottomFace(i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                    if (chunk[i][j][k] != 2) {
+                        worldMesh.insert(worldMesh.end(), face.begin(), face.end());
+                    }
+                    else {
+                        transpMesh.insert(transpMesh.end(), face.begin(), face.end());
+                    }
                 }
-                if (rez[0]) {
-                    face = addXNegFace(i, j, k, uv[0], uv[1], 0.25);
-                    worldMesh.insert(worldMesh.end(), face.begin(), face.end());
+                if (j == sizeChunk - 1 || chunk[i][j + 1][k] == -1) {
+                    vector<float> faceUV = getFaceUV(chunk[i][j][k], 3);
+                    vector<float> face = addTopFace(i, j+1, k, faceUV[0], faceUV[1], faceUV[2]);
+                    if (chunk[i][j][k] != 2) {
+                        worldMesh.insert(worldMesh.end(), face.begin(), face.end());
+                    }
+                    else {
+                        transpMesh.insert(transpMesh.end(), face.begin(), face.end());
+                    }
                 }
-                if (rez[5]) {
-                    face = addZPosFace(i, j, k+1, uv[0], uv[1], 0.25);
-                    worldMesh.insert(worldMesh.end(), face.begin(), face.end());
+                if (k == 0 || chunk[i][j][k - 1] == -1) {
+                    vector<float> faceUV = getFaceUV(chunk[i][j][k], 4);
+                    vector<float> face = addZNegFace(i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                    if (chunk[i][j][k] != 2) {
+                        worldMesh.insert(worldMesh.end(), face.begin(), face.end());
+                    }
+                    else {
+                        transpMesh.insert(transpMesh.end(), face.begin(), face.end());
+                    }
                 }
-                if (rez[4]) {
-                    face = addZNegFace(i, j, k, uv[0], uv[1], 0.25);
-                    worldMesh.insert(worldMesh.end(), face.begin(), face.end());
+                if (k == sizeChunk - 1 || chunk[i][j][k + 1] == -1) {
+                    vector<float> faceUV = getFaceUV(chunk[i][j][k], 5);
+                    vector<float> face = addZPosFace(i, j, k+1, faceUV[0], faceUV[1], faceUV[2]);
+                    if (chunk[i][j][k] != 2) {
+                        worldMesh.insert(worldMesh.end(), face.begin(), face.end());
+                    }
+                    else {
+                        transpMesh.insert(transpMesh.end(), face.begin(), face.end());
+                    }
                 }
             }
         }
@@ -163,6 +193,8 @@ int main() {
 
     Mesh* mesh = setupMeshTexture(worldMesh);
     setMeshTextureFile(mesh, "sources/textures/all.png");
+    Mesh* mesh2 = setupMeshTexture(transpMesh);
+    setMeshTextureFile(mesh2, "sources/textures/all.png");
 
 
 
@@ -172,6 +204,7 @@ int main() {
     Light* sun = createLight(DIRECTIONAL, true);
     setLightColor(sun, glm::vec3(1.0, 1.0, 1.0));
     setLightIntensity(sun, 1.0);
+
 
 
     while (shouldCloseTheApp()) {

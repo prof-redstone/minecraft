@@ -62,10 +62,11 @@ float ShadowCalculation(vec4 fragPosLightSpace, sampler2D shadowMap, vec3 lightD
     }
     shadow /= (1 + 2 * PCFSize) * (1 + 2 * PCFSize);
 
-    vec2 distanceFromEdge;
+    vec3 distanceFromEdge;
     distanceFromEdge.x = min(projCoords.x, 1.0 - projCoords.x);
     distanceFromEdge.y = min(projCoords.y, 1.0 - projCoords.y);
-    float distToEdge = min(distanceFromEdge.x, distanceFromEdge.y) * 10.0;
+    distanceFromEdge.z = min(projCoords.z, 1.0 - projCoords.z);
+    float distToEdge = min(min(distanceFromEdge.x, distanceFromEdge.y), distanceFromEdge.z) * 10.0;
     float fadeout = clamp(distToEdge, 0.0, 1.0);
     shadow *= fadeout;
     return shadow;

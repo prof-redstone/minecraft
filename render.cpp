@@ -279,8 +279,8 @@ Light* createLight(
         light->fov = glm::radians(90.0f);
     }
     else {
-        light->near_plane = -20;
-        light->far_plane = 20;
+        light->near_plane = -25.0;
+        light->far_plane = 25.0;
         light->shadowWidth = 2048;
         light->shadowHeight = 2048;
         light->PCFSize = 1;
@@ -360,7 +360,8 @@ void renderScene() {
     float currentFrame = static_cast<float>(glfwGetTime());
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
-    calculerEtAfficherMoyenneFPS(1 / deltaTime, 60);
+    calculerEtAfficherMoyenneFPS(1.0 / deltaTime, 60);
+    //std::cout << 1.0 / deltaTime << std::endl;
 
 
     processInput(window);
