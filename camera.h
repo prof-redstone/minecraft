@@ -17,7 +17,7 @@ enum Camera_Movement {
 // Default camera values
 const float YAW = -90.0f;
 const float PITCH = 0.0f;
-const float SPEED = 5.0f;
+const float SPEED = 50.0f;
 const float SENSITIVITY = 0.05f;
 const float ZOOM = 45.0f;
 
@@ -111,8 +111,8 @@ public:
         Zoom -= (float)yoffset;
         if (Zoom < 1.0f)
             Zoom = 1.0f;
-        if (Zoom > 45.0f)
-            Zoom = 45.0f;
+        if (Zoom > 90.0f)
+            Zoom = 90.0f;
     }
 
 private:

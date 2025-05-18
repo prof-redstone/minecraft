@@ -1,15 +1,19 @@
-
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <sstream>
 #include <vector>
+#include <unordered_map>
+#include "camera.h"
 #include "render.hpp"
 
-#define sizeChunk 100
+#define CHUNKWIDTH 10
+#define CHUNKHEIGHT 15
+#define RENDER_DISTANCE 3
 using namespace std;
 
 int textureMapWidth = 4;
+Camera camera;
 
 vector<vector<int>> faceCorrespondence = {
     {0, 0, 0, 0, 0, 0},
@@ -20,6 +24,7 @@ vector<vector<int>> faceCorrespondence = {
     {4, 4, 4, 5, 4, 4},
     {6, 6, 6, 6, 6, 6}
 };
+
 
 void addTopFace(vector<float>& mesh, float x, float y, float z, float ou, float ov, float s) {
     mesh.insert(mesh.end(), {
@@ -94,109 +99,226 @@ vector<float> getFaceUV(int bloc, int face) {
     return rez;
 }
 
-int main() {
-    std::cout << "1\n";
-    SetupRender("Minecraft");
+typedef struct ChunkKey {
+    int x;
+    int y;
 
-    std::vector<float> worldMesh;
-    std::vector<float> transpMesh;
-    worldMesh.reserve(sizeChunk * sizeChunk * sizeChunk * 6 * 30); // estimation
-    transpMesh.reserve(sizeChunk * sizeChunk * sizeChunk * 30);
+    bool operator==(const ChunkKey& other) const {
+        return x == other.x && y == other.y;
+    }
+} ChunkKey;
 
-    vector<vector<vector<int>>> chunk(sizeChunk, vector<vector<int>>(sizeChunk, vector<int>(sizeChunk, 0)));
-    for (int i = 0; i < sizeChunk; ++i) {
-        for (int j = 0; j < sizeChunk; ++j) {
-            for (int k = 0; k < sizeChunk; ++k) {
-                chunk[i][j][k] = k%5;
+namespace std {
+    template<>
+    struct hash<ChunkKey> {
+        std::size_t operator()(const ChunkKey& key) const {
+            return hash<int>()(key.x) ^ (hash<int>()(key.y) << 1);
+        }
+    };
+}
+
+typedef struct chunk {
+    ChunkKey key;
+    vector<vector<vector<int>>> blocks;
+    std::vector<float> mesh;
+    Mesh* meshObj = nullptr;
+    bool isActive = false;
+} Chunk;
+
+std::unordered_map<ChunkKey, Chunk> chunks;
+
+void initChunk(chunk& chunk, int x, int y) {
+    ChunkKey key;
+    key.x = x;
+    key.y = y;
+    chunk.key = key;
+    chunk.blocks.resize(CHUNKWIDTH, vector<vector<int>>(CHUNKHEIGHT, vector<int>(CHUNKWIDTH, -1)));
+
+    for (int i = 0; i < CHUNKWIDTH; ++i) {
+        for (int j = 0; j < CHUNKHEIGHT; ++j) {
+            for (int k = 0; k < CHUNKWIDTH; ++k) {
+                chunk.blocks[i][j][k] = k % 5;
                 if ((i + j + k) % 2 == 0) {
-                    chunk[i][j][k] = -1;
+                    chunk.blocks[i][j][k] = -1;
                 }
             }
         }
     }
-    //chunk[4][4][4] = -1;
+}
 
-    for (int i = 0; i < sizeChunk; ++i) {
-        for (int j = 0; j < sizeChunk; ++j) {
-            for (int k = 0; k < sizeChunk; ++k) {
+void updateMesh(chunk& chunk) {
+    chunk.mesh.clear();
+    for (int i = 0; i < CHUNKWIDTH; ++i) {
+        for (int j = 0; j < CHUNKHEIGHT; ++j) {
+            for (int k = 0; k < CHUNKWIDTH; ++k) {
 
-                if (chunk[i][j][k] == -1) continue;
+                if (chunk.blocks[i][j][k] == -1) continue;
 
-                if (i == 0 || chunk[i - 1][j][k] == -1) {
-                    vector<float> faceUV = getFaceUV(chunk[i][j][k], 0);
-                    if (chunk[i][j][k] != 2) {
-                        addXNegFace(worldMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
-                    }else {
-                        addXNegFace(transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
-                    }
-                }
-                if (i == sizeChunk - 1 || chunk[i + 1][j][k] == -1) {
-                    vector<float> faceUV = getFaceUV(chunk[i][j][k], 1);
-                    if (chunk[i][j][k] != 2) {
-                        addXPosFace(worldMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                if (i == 0 || chunk.blocks[i - 1][j][k] == -1) {
+                    vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 0);
+                    if (chunk.blocks[i][j][k] != 2) {
+                        addXNegFace(chunk.mesh, i+chunk.key.x*CHUNKWIDTH, j, k + chunk.key.y*CHUNKWIDTH, faceUV[0], faceUV[1], faceUV[2]);
                     }
                     else {
-                        addXPosFace(transpMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        addXNegFace(chunk.mesh, i + chunk.key.x*CHUNKWIDTH, j, k + chunk.key.y*CHUNKWIDTH, faceUV[0], faceUV[1], faceUV[2]);
                     }
                 }
-                if (j == 0 || chunk[i][j - 1][k] == -1) {
-                    vector<float> faceUV = getFaceUV(chunk[i][j][k], 2);
-                    if (chunk[i][j][k] != 2) {
-                        addBottomFace(worldMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                if (i == CHUNKWIDTH - 1 || chunk.blocks[i + 1][j][k] == -1) {
+                    vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 1);
+                    if (chunk.blocks[i][j][k] != 2) {
+                        addXPosFace(chunk.mesh, i + 1 + chunk.key.x*CHUNKWIDTH, j, k + chunk.key.y*CHUNKWIDTH, faceUV[0], faceUV[1], faceUV[2]);
                     }
                     else {
-                        addBottomFace(transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        addXPosFace(chunk.mesh, i + 1 + chunk.key.x*CHUNKWIDTH, j, k + chunk.key.y*CHUNKWIDTH, faceUV[0], faceUV[1], faceUV[2]);
                     }
                 }
-                if (j == sizeChunk - 1 || chunk[i][j + 1][k] == -1) {
-                    vector<float> faceUV = getFaceUV(chunk[i][j][k], 3);
-                    if (chunk[i][j][k] != 2) {
-                        addTopFace(worldMesh, i, j + 1, k, faceUV[0], faceUV[1], faceUV[2]);
+                if (j == 0 || chunk.blocks[i][j - 1][k] == -1) {
+                    vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 2);
+                    if (chunk.blocks[i][j][k] != 2) {
+                        addBottomFace(chunk.mesh, i + chunk.key.x*CHUNKWIDTH, j, k + chunk.key.y*CHUNKWIDTH, faceUV[0], faceUV[1], faceUV[2]);
                     }
                     else {
-                        addTopFace(transpMesh, i, j + 1, k, faceUV[0], faceUV[1], faceUV[2]);
+                        addBottomFace(chunk.mesh, i + chunk.key.x*CHUNKWIDTH, j, k + chunk.key.y*CHUNKWIDTH, faceUV[0], faceUV[1], faceUV[2]);
                     }
                 }
-                if (k == 0 || chunk[i][j][k - 1] == -1) {
-                    vector<float> faceUV = getFaceUV(chunk[i][j][k], 4);
-                    if (chunk[i][j][k] != 2) {
-                        addZNegFace(worldMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                if (j == CHUNKHEIGHT - 1 || chunk.blocks[i][j + 1][k] == -1) {
+                    vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 3);
+                    if (chunk.blocks[i][j][k] != 2) {
+                        addTopFace(chunk.mesh, i + chunk.key.x*CHUNKWIDTH, j + 1, k + chunk.key.y*CHUNKWIDTH, faceUV[0], faceUV[1], faceUV[2]);
                     }
                     else {
-                        addZNegFace(transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        addTopFace(chunk.mesh, i + chunk.key.x*CHUNKWIDTH, j + 1, k + chunk.key.y*CHUNKWIDTH, faceUV[0], faceUV[1], faceUV[2]);
                     }
                 }
-                if (k == sizeChunk - 1 || chunk[i][j][k + 1] == -1) {
-                    vector<float> faceUV = getFaceUV(chunk[i][j][k], 5);
-                    if (chunk[i][j][k] != 2) {
-                        addZPosFace(worldMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
+                if (k == 0 || chunk.blocks[i][j][k - 1] == -1) {
+                    vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 4);
+                    if (chunk.blocks[i][j][k] != 2) {
+                        addZNegFace(chunk.mesh, i + chunk.key.x*CHUNKWIDTH, j, k + chunk.key.y*CHUNKWIDTH, faceUV[0], faceUV[1], faceUV[2]);
                     }
                     else {
-                        addZPosFace(transpMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
+                        addZNegFace(chunk.mesh, i + chunk.key.x*CHUNKWIDTH, j, k + chunk.key.y*CHUNKWIDTH, faceUV[0], faceUV[1], faceUV[2]);
+                    }
+                }
+                if (k == CHUNKWIDTH - 1 || chunk.blocks[i][j][k + 1] == -1) {
+                    vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 5);
+                    if (chunk.blocks[i][j][k] != 2) {
+                        addZPosFace(chunk.mesh, i + chunk.key.x*CHUNKWIDTH, j, k + 1 + chunk.key.y*CHUNKWIDTH, faceUV[0], faceUV[1], faceUV[2]);
+                    }
+                    else {
+                        addZPosFace(chunk.mesh, i + chunk.key.x*CHUNKWIDTH, j, k + 1 + chunk.key.y*CHUNKWIDTH, faceUV[0], faceUV[1], faceUV[2]);
                     }
                 }
             }
         }
     }
-    cout << 2 << endl;
-    Mesh* mesh = setupMeshTexture(worldMesh);
-    setMeshTextureFile(mesh, "sources/textures/all.png");
-    Mesh* mesh2 = setupMeshTexture(transpMesh);
-    setMeshTextureFile(mesh2, "sources/textures/all.png");
-    cout << 3 << endl;
+    if (chunk.meshObj == NULL) {
+        chunk.meshObj = setupMeshTexture(chunk.mesh);
+        setMeshTextureFile(chunk.meshObj, "sources/textures/all.png");
+    }
+    else {
+        updateMesh(chunk.meshObj, chunk.mesh);
+    }
+}
 
+void loadChunk(int x, int y) {
+    ChunkKey key = { x, y };
+    auto it = chunks.find(key);
+    if (it == chunks.end()) {
+        Chunk chunk;
+        initChunk(chunk, x, y);
+        chunk.key = key;
+        chunks[key] = chunk;
+        it = chunks.find(key);
+    }
 
+    Chunk& chunk = it->second; 
+    if (!chunk.isActive) {
+        chunk.isActive = true;
+        updateMesh(chunk);
+        cout << "load : " << x << " , " << y << endl;
+    }
+}
 
+void loadChunksAround() {
+    const int renderDistance = RENDER_DISTANCE;
 
+    int pChunkX = static_cast<int>(floor(camera.Position.x / CHUNKWIDTH));
+    int pChunkY = static_cast<int>(floor(camera.Position.z / CHUNKWIDTH));
 
+    for (int xOffset = -renderDistance; xOffset <= renderDistance; xOffset++) {
+        for (int yOffset = -renderDistance; yOffset <= renderDistance; yOffset++) {
+            int chunkX = pChunkX + xOffset;
+            int chunkY = pChunkY + yOffset;
+
+            int distanceSquared = xOffset * xOffset + yOffset * yOffset;
+            if (distanceSquared <= renderDistance * renderDistance) {
+                loadChunk(chunkX, chunkY);
+            }
+        }
+    }
+}
+
+void unloadChunk(const ChunkKey& key) {
+    auto it = chunks.find(key);
+    if (it != chunks.end()) {
+        Chunk& chunk = it->second;
+
+        if (chunk.meshObj != nullptr) {
+            deleteMesh(chunk.meshObj);
+            chunk.meshObj = nullptr;
+        }
+
+        chunk.mesh.clear();
+        chunk.mesh.shrink_to_fit(); 
+
+        chunk.isActive = false;
+
+    }
+}
+
+void unloadDistantChunks() {
+    const int unloadDistance = RENDER_DISTANCE + 1;
+
+    int pChunkX = static_cast<int>(floor(camera.Position.x / CHUNKWIDTH));
+    int pChunkY = static_cast<int>(floor(camera.Position.z / CHUNKWIDTH));
+
+    std::vector<ChunkKey> chunksToUnload;
+
+    for (auto& pair : chunks) {
+        Chunk& chunk = pair.second;
+
+        if (chunk.isActive) {
+            int distanceX = abs(chunk.key.x - pChunkX);
+            int distanceY = abs(chunk.key.y - pChunkY);
+            int distanceSquared = distanceX * distanceX + distanceY * distanceY;
+
+            if (distanceSquared > unloadDistance * unloadDistance) {
+                chunksToUnload.push_back(chunk.key);
+            }
+        }
+    }
+
+    for (const ChunkKey& key : chunksToUnload) {
+        unloadChunk(key);
+        std::cout << "unload : " << key.x << " , " << key.y << std::endl;
+    }
+}
+
+int main() {
+    SetupRender("Minecraft", &camera);
+    
+
+    loadChunksAround();
+
+    camera.Position = glm::vec3(0.0, 20.0, 0.0);
 
     Light* sun = createLight(DIRECTIONAL, true);
     setLightColor(sun, glm::vec3(1.0, 1.0, 1.0));
     setLightIntensity(sun, 1.0);
 
-
-
     while (shouldCloseTheApp()) {
+        loadChunksAround();
+        unloadDistantChunks();
         renderScene();
     }
     terminateRender();

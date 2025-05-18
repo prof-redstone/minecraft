@@ -10,7 +10,6 @@
 
 #include "stb_image.h"
 #include "render.hpp"
-#include "camera.h"
 
 std::vector<std::string> SkyBoxFaces{
     "sources/skybox/right.jpg",
@@ -31,7 +30,7 @@ const char* shaderPathDepthVert = "sources/shaders/DepthShadowVertex.glsl";
 const char* shaderPathDepthFrag = "sources/shaders/DepthShadowFrag.glsl";
 
 GLFWwindow* window = nullptr;
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+extern Camera camera;
 
 
 static unsigned int SCR_WIDTH = 1000;
@@ -54,7 +53,7 @@ static std::vector<Mesh*> meshList;
 static std::vector<Light*> lightList;
 
 
-void SetupRender(const char * nom) {
+void SetupRender(const char * nom, Camera* cam) {
     if (InitGLFW(window, nom) == -1) std::cout << "Erreur in init GLFW" << std::endl;
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glEnable(GL_DEPTH_TEST);
@@ -72,6 +71,7 @@ void SetupRender(const char * nom) {
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    camera = *cam;
 }
 
 void terminateRender() {
@@ -194,6 +194,32 @@ Mesh* setupMeshTexture(std::vector<float> vertices, const glm::vec3& position) {
     mesh->enableTexture = true;
     meshList.push_back(mesh);
     return mesh;
+}
+
+void deleteMesh(Mesh* mesh) {
+    if (mesh == nullptr) {
+        return;
+    }
+
+    auto it = std::find(meshList.begin(), meshList.end(), mesh);
+    if (it != meshList.end()) {
+        meshList.erase(it);
+    }
+
+    glDeleteVertexArrays(1, &(mesh->VAO));
+    glDeleteBuffers(1, &(mesh->VBO));
+    glDeleteBuffers(1, &(mesh->VBONorm));
+
+    if (mesh->enableTexture) {
+        glDeleteTextures(1, &(mesh->texture));
+    }
+
+    mesh->vertices.clear();
+    mesh->vertices.shrink_to_fit();
+    mesh->normales.clear();
+    mesh->normales.shrink_to_fit();
+
+    delete mesh;
 }
 
 

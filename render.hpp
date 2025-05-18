@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <string>
+#include "camera.h"
 
 // Forward declarations des classes utilisées
 class Camera;
@@ -72,7 +73,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 // Fonctions d'initialisation
 int InitGLFW(GLFWwindow*& window, const char* nom);
-void SetupRender(const char* nom);
+void SetupRender(const char* nom, Camera* cam);
 void terminateRender();
 
 // Fonctions de rendu
@@ -92,6 +93,7 @@ std::vector<float> addNormals(const std::vector<float>& verts);
 void setMeshTextureFile(Mesh* mesh,const char* path);
 Mesh* setupMesh(std::vector<float> vertices, const glm::vec3& position = glm::vec3(0.0f, 0.0f, 0.0f));
 Mesh* setupMeshTexture(std::vector<float> vertices, const glm::vec3& position = glm::vec3(0.0f, 0.0f, 0.0f));
+void deleteMesh(Mesh* mesh);
 void updateMeshTexture(Mesh* mesh, std::vector<float> vertices);
 void updateMesh(Mesh* mesh, std::vector<float> vertices);
 void setMeshPosition(Mesh* mesh, const glm::vec3& position);
