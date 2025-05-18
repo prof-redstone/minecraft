@@ -8,8 +8,9 @@
 #include "render.hpp"
 
 #define CHUNKWIDTH 10
-#define CHUNKHEIGHT 15
-#define RENDER_DISTANCE 3
+#define CHUNKHEIGHT 30
+#define RENDER_DISTANCE 11
+int maxChunksPerFrame = 1;
 using namespace std;
 
 int textureMapWidth = 4;
@@ -126,6 +127,8 @@ typedef struct chunk {
 } Chunk;
 
 std::unordered_map<ChunkKey, Chunk> chunks;
+std::vector<ChunkKey> chunksToLoadQueue;
+std::vector<ChunkKey> chunksToUnloadQueue;
 
 void initChunk(chunk& chunk, int x, int y) {
     ChunkKey key;
@@ -135,11 +138,15 @@ void initChunk(chunk& chunk, int x, int y) {
     chunk.blocks.resize(CHUNKWIDTH, vector<vector<int>>(CHUNKHEIGHT, vector<int>(CHUNKWIDTH, -1)));
 
     for (int i = 0; i < CHUNKWIDTH; ++i) {
-        for (int j = 0; j < CHUNKHEIGHT; ++j) {
-            for (int k = 0; k < CHUNKWIDTH; ++k) {
-                chunk.blocks[i][j][k] = k % 5;
+        for (int k = 0; k < CHUNKWIDTH; ++k) {
+            for (int j = 0; j < CHUNKHEIGHT; ++j) {
+                /*chunk.blocks[i][j][k] = k % 5;
                 if ((i + j + k) % 2 == 0) {
                     chunk.blocks[i][j][k] = -1;
+                }*/
+                chunk.blocks[i][j][k] = -1;
+                if (j < glm::cos((i + x * CHUNKWIDTH) * 0.1)* glm::cos((k + y * CHUNKWIDTH) * 0.1) * 5 + 7) {
+                    chunk.blocks[i][j][k] = 4;
                 }
             }
         }
@@ -220,24 +227,7 @@ void updateMesh(chunk& chunk) {
     }
 }
 
-void loadChunk(int x, int y) {
-    ChunkKey key = { x, y };
-    auto it = chunks.find(key);
-    if (it == chunks.end()) {
-        Chunk chunk;
-        initChunk(chunk, x, y);
-        chunk.key = key;
-        chunks[key] = chunk;
-        it = chunks.find(key);
-    }
 
-    Chunk& chunk = it->second; 
-    if (!chunk.isActive) {
-        chunk.isActive = true;
-        updateMesh(chunk);
-        cout << "load : " << x << " , " << y << endl;
-    }
-}
 
 void loadChunksAround() {
     const int renderDistance = RENDER_DISTANCE;
@@ -252,7 +242,13 @@ void loadChunksAround() {
 
             int distanceSquared = xOffset * xOffset + yOffset * yOffset;
             if (distanceSquared <= renderDistance * renderDistance) {
-                loadChunk(chunkX, chunkY);
+                ChunkKey key = { chunkX, chunkY };
+                auto it = chunks.find(key);
+                if (it == chunks.end() || !it->second.isActive) {
+                    if (std::find(chunksToLoadQueue.begin(), chunksToLoadQueue.end(), key) == chunksToLoadQueue.end()) {//pour pas doublons
+                        chunksToLoadQueue.push_back(key);
+                    }
+                }
             }
         }
     }
@@ -293,14 +289,48 @@ void unloadDistantChunks() {
             int distanceSquared = distanceX * distanceX + distanceY * distanceY;
 
             if (distanceSquared > unloadDistance * unloadDistance) {
-                chunksToUnload.push_back(chunk.key);
+                if (std::find(chunksToUnloadQueue.begin(), chunksToUnloadQueue.end(), chunk.key) == chunksToUnloadQueue.end()) {
+                    chunksToUnloadQueue.push_back(chunk.key);
+                }
             }
         }
     }
+}
 
-    for (const ChunkKey& key : chunksToUnload) {
+void processChunkQueues() {
+
+    
+    int unloadOps = 0;
+    while (!chunksToUnloadQueue.empty() && unloadOps < maxChunksPerFrame) {
+        ChunkKey key = chunksToUnloadQueue.front();
+        chunksToUnloadQueue.erase(chunksToUnloadQueue.begin());
+
         unloadChunk(key);
         std::cout << "unload : " << key.x << " , " << key.y << std::endl;
+        unloadOps++;
+    }
+
+    
+    int loadOps = 0;
+    while (!chunksToLoadQueue.empty() && loadOps < maxChunksPerFrame) {
+        ChunkKey key = chunksToLoadQueue.front();
+        chunksToLoadQueue.erase(chunksToLoadQueue.begin());
+
+        auto it = chunks.find(key);
+        if (it == chunks.end()) {
+            Chunk chunk;
+            initChunk(chunk, key.x, key.y);
+            chunk.key = key;
+            chunks[key] = chunk;
+            it = chunks.find(key);
+        }
+
+        Chunk& chunk = it->second;
+        if (!chunk.isActive) {
+            chunk.isActive = true;
+            updateMesh(chunk);
+            loadOps++;
+        }
     }
 }
 
@@ -314,11 +344,12 @@ int main() {
 
     Light* sun = createLight(DIRECTIONAL, true);
     setLightColor(sun, glm::vec3(1.0, 1.0, 1.0));
-    setLightIntensity(sun, 1.0);
+    setLightIntensity(sun, 0.8);
 
     while (shouldCloseTheApp()) {
         loadChunksAround();
         unloadDistantChunks();
+        processChunkQueues();
         renderScene();
     }
     terminateRender();
