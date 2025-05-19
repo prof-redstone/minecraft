@@ -57,6 +57,8 @@ void SetupRender(const char * nom, Camera* cam) {
     if (InitGLFW(window, nom) == -1) std::cout << "Erreur in init GLFW" << std::endl;
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glEnable(GL_DEPTH_TEST);
+    glfwSwapInterval(0);
+
 
     shaderSkybox = ShaderLoader(shaderPathSkyBoxVert, shaderPathSkyBoxFrag);
     shaderLight = ShaderLoader(shaderPathLightVert, shaderPathLightFrag);
@@ -67,7 +69,6 @@ void SetupRender(const char * nom, Camera* cam) {
 
     VAO_SKY = setupSkyboxVAO();
     VAO_LIGHT = setupLightVAO();
-
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -116,7 +117,7 @@ void setMeshTextureFile(Mesh* mesh, const char* path) {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         }
         mesh->enableTexture = true;
-        std::cout << path << " loaded with " << nrChannels << " channels" << std::endl;
+        //std::cout << path << " loaded with " << nrChannels << " channels" << std::endl;
     }
     else {
         std::cout << "Failed to load texture : " << path << std::endl;
@@ -427,7 +428,7 @@ void renderScene() {
 
     glUseProgram(shaderProgram);
 
-    glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 500.0f);
     glm::mat4 view = camera.GetViewMatrix();
 
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
