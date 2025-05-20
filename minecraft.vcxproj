@@ -150,6 +150,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h" />
+    <ClInclude Include="db_perlin.hpp" />
     <ClInclude Include="render.hpp" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>

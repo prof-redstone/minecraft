@@ -191,7 +191,7 @@ Mesh* setupMeshTexture(std::vector<float> vertices, const glm::vec3& position) {
     mesh->model = glm::mat4(glm::translate(glm::mat4(1.0f), position));
     mesh->color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
     mesh->shininess = 32;
-    mesh->ambianteLightMult = 0.4;
+    mesh->ambianteLightMult = 0.7;
     mesh->enableTexture = true;
     meshList.push_back(mesh);
     return mesh;
@@ -387,7 +387,7 @@ void renderScene() {
     float currentFrame = static_cast<float>(glfwGetTime());
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
-    //calculerEtAfficherMoyenneFPS(1.0 / deltaTime, 60);
+    calculerEtAfficherMoyenneFPS(1.0 / deltaTime, 60);
     //std::cout <<  deltaTime << std::endl;
 
 

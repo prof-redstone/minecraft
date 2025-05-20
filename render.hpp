@@ -108,7 +108,7 @@ Light* createLight(
     LightType type = POINT,
     bool castShadow = false,
     const glm::vec3& position = glm::vec3(4.0f, 5.0f, 1.0f),
-    const glm::vec3& direction = glm::vec3(1.5f, 5.0f, 1.0f),
+    const glm::vec3& direction = glm::vec3(2.0f, 5.0f, 1.0f),
     const glm::vec3& color = glm::vec3(1.0f, 1.0f, 1.0f),
     float intensity = 1.0f,
     float distance = -1.0f

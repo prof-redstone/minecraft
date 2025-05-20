@@ -4,13 +4,15 @@
 #include <sstream>
 #include <vector>
 #include <unordered_map>
+#define DB_PERLIN_IMPL
+#include "db_perlin.hpp"
 #include "camera.h"
 #include "render.hpp"
 
 #define CHUNKWIDTH 16
-#define CHUNKHEIGHT 30
-#define RENDER_DISTANCE 30
-int maxChunksPerFrame = 20;
+#define CHUNKHEIGHT 100
+#define RENDER_DISTANCE 20
+int maxChunksPerFrame = 2;
 using namespace std;
 
 int textureMapWidth = 4;
@@ -139,14 +141,19 @@ void initChunk(chunk& chunk, int x, int y) {
 
     for (int i = 0; i < CHUNKWIDTH; ++i) {
         for (int k = 0; k < CHUNKWIDTH; ++k) {
+            double h = db::perlin((double)(i + key.x * CHUNKWIDTH) / 64.0, (double)(k + key.y * CHUNKWIDTH) / 64.0) * 40 + 30;
+            h += db::perlin((double)(i + key.x * CHUNKWIDTH) / 8.0, (double)(k + key.y * CHUNKWIDTH) / 8.0) * 5;
             for (int j = 0; j < CHUNKHEIGHT; ++j) {
-                /*chunk.blocks[i][j][k] = k % 5;
-                if ((i + j + k) % 2 == 0) {
+                if (j < h) {
+                    if (j < h - 1) {
+                        chunk.blocks[i][j][k] = 3;
+                    }
+                    else {
+                        chunk.blocks[i][j][k] = 4;
+                    }
+                }
+                else {
                     chunk.blocks[i][j][k] = -1;
-                }*/
-                chunk.blocks[i][j][k] = -1;
-                if (j < glm::cos((i + x * CHUNKWIDTH) * 0.1)* glm::cos((k + y * CHUNKWIDTH) * 0.1) * 5 + 7) {
-                    chunk.blocks[i][j][k] = 4;
                 }
             }
         }
@@ -484,7 +491,7 @@ int main() {
 
     Light* sun = createLight(DIRECTIONAL, true);
     setLightColor(sun, glm::vec3(1.0, 1.0, 1.0));
-    setLightIntensity(sun, 0.7);
+    setLightIntensity(sun, 0.6);
 
     while (shouldCloseTheApp()) {
         loadChunksAround();
