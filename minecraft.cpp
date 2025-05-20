@@ -9,9 +9,9 @@
 #include "camera.h"
 #include "render.hpp"
 
-#define CHUNKWIDTH 16
+#define CHUNKWIDTH 20
 #define CHUNKHEIGHT 100
-#define RENDER_DISTANCE 20
+#define RENDER_DISTANCE 15
 int maxChunksPerFrame = 2;
 using namespace std;
 
@@ -122,10 +122,11 @@ namespace std {
 
 typedef struct chunk {
     ChunkKey key;
-    vector<vector<vector<int>>> blocks;
+    vector<vector<vector<signed char>>> blocks;
     std::vector<float> mesh;
     Mesh* meshObj = nullptr;
     bool isActive = false;
+    bool decorated = false;
 } Chunk;
 
 std::unordered_map<ChunkKey, Chunk> chunks;
@@ -137,23 +138,29 @@ void initChunk(chunk& chunk, int x, int y) {
     key.x = x;
     key.y = y;
     chunk.key = key;
-    chunk.blocks.resize(CHUNKWIDTH, vector<vector<int>>(CHUNKHEIGHT, vector<int>(CHUNKWIDTH, -1)));
+    chunk.blocks.resize(CHUNKWIDTH, vector<vector<signed char>>(CHUNKHEIGHT, vector<signed char>(CHUNKWIDTH, -1)));
 
     for (int i = 0; i < CHUNKWIDTH; ++i) {
         for (int k = 0; k < CHUNKWIDTH; ++k) {
-            double h = db::perlin((double)(i + key.x * CHUNKWIDTH) / 64.0, (double)(k + key.y * CHUNKWIDTH) / 64.0) * 40 + 30;
-            h += db::perlin((double)(i + key.x * CHUNKWIDTH) / 8.0, (double)(k + key.y * CHUNKWIDTH) / 8.0) * 5;
             for (int j = 0; j < CHUNKHEIGHT; ++j) {
-                if (j < h) {
-                    if (j < h - 1) {
-                        chunk.blocks[i][j][k] = 3;
-                    }
-                    else {
-                        chunk.blocks[i][j][k] = 4;
-                    }
+                double h = db::perlin((double)(i + key.x * CHUNKWIDTH) / 128.0, (double)(k + key.y * CHUNKWIDTH) / 86.0, (double)(j) / 86.0);
+                h += db::perlin((double)(i + key.x * CHUNKWIDTH) / 8.0, (double)(k + key.y * CHUNKWIDTH) / 8.0) * 0.08;
+                if ((h + 1.0)*0.5 > (double)j / CHUNKHEIGHT) {
+                    chunk.blocks[i][j][k] = 0;
                 }
                 else {
                     chunk.blocks[i][j][k] = -1;
+                }
+            }
+        }
+    }
+    for (int i = 0; i < CHUNKWIDTH; ++i) {
+        for (int k = 0; k < CHUNKWIDTH; ++k) {
+            for (int j = 0; j < CHUNKHEIGHT-2; ++j) {
+                if (chunk.blocks[i][j][k] != -1 && chunk.blocks[i][j + 1][k] == -1) {
+                    chunk.blocks[i][j][k] = 4;
+                }else if(chunk.blocks[i][j][k] != -1 && chunk.blocks[i][j + 2][k] == -1) {
+                    chunk.blocks[i][j][k] = 3;
                 }
             }
         }
@@ -481,6 +488,31 @@ void processChunkQueues() {
     }
 }
 
+void decorateChunk() {
+    const int renderDistance = RENDER_DISTANCE;
+
+    int pChunkX = static_cast<int>(floor(camera.Position.x / CHUNKWIDTH));
+    int pChunkY = static_cast<int>(floor(camera.Position.z / CHUNKWIDTH));
+
+    for (int xOffset = -renderDistance; xOffset <= renderDistance; xOffset++) {
+        for (int yOffset = -renderDistance; yOffset <= renderDistance; yOffset++) {
+            int chunkX = pChunkX + xOffset;
+            int chunkY = pChunkY + yOffset;
+
+            int distanceSquared = xOffset * xOffset + yOffset * yOffset;
+            if (distanceSquared <= renderDistance * renderDistance) {
+                ChunkKey key = { chunkX, chunkY };
+                auto it = chunks.find(key);
+                if (it != chunks.end() ) {
+                    Chunk& chunk = it->second;
+                    //chunk.blocks[2][80][1] = 1;
+                    it->second.decorated = true;
+                }
+            }
+        }
+    }
+}
+
 int main() {
     SetupRender("Minecraft", &camera);
     
@@ -489,14 +521,16 @@ int main() {
 
     camera.Position = glm::vec3(0.0, 20.0, 0.0);
 
-    Light* sun = createLight(DIRECTIONAL, true);
+    Light* sun = createLight(DIRECTIONAL, false);
     setLightColor(sun, glm::vec3(1.0, 1.0, 1.0));
-    setLightIntensity(sun, 0.6);
+    setLightIntensity(sun, 0.5);
 
     while (shouldCloseTheApp()) {
         loadChunksAround();
         unloadDistantChunks();
         processChunkQueues();
+        decorateChunk();
+
         renderScene();
     }
     terminateRender();

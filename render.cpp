@@ -191,7 +191,7 @@ Mesh* setupMeshTexture(std::vector<float> vertices, const glm::vec3& position) {
     mesh->model = glm::mat4(glm::translate(glm::mat4(1.0f), position));
     mesh->color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
     mesh->shininess = 32;
-    mesh->ambianteLightMult = 0.7;
+    mesh->ambianteLightMult = 0.8;
     mesh->enableTexture = true;
     meshList.push_back(mesh);
     return mesh;
@@ -306,8 +306,8 @@ Light* createLight(
         light->fov = glm::radians(90.0f);
     }
     else {
-        light->near_plane = -25.0;
-        light->far_plane = 25.0;
+        light->near_plane = -50.0;
+        light->far_plane = 50.0;
         light->shadowWidth = 2048;
         light->shadowHeight = 2048;
         light->PCFSize = 1;
