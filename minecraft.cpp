@@ -4,6 +4,7 @@
 #include <sstream>
 #include <vector>
 #include <unordered_map>
+#include <cstdint>
 #define DB_PERLIN_IMPL
 #include "db_perlin.hpp"
 #include "camera.h"
@@ -11,8 +12,8 @@
 
 #define CHUNKWIDTH 20
 #define CHUNKHEIGHT 100
-#define RENDER_DISTANCE 15
-int maxChunksPerFrame = 2;
+#define RENDER_DISTANCE 10
+int maxChunksPerFrame = 20;
 using namespace std;
 
 int textureMapWidth = 4;
@@ -25,7 +26,8 @@ vector<vector<int>> faceCorrespondence = {
     {3, 3, 3, 3, 3, 3},
 
     {4, 4, 4, 5, 4, 4},
-    {6, 6, 6, 6, 6, 6}
+    {6, 6, 6, 6, 6, 6},
+    {7, 7, 7, 7, 7, 7}
 };
 
 
@@ -133,17 +135,32 @@ std::unordered_map<ChunkKey, Chunk> chunks;
 std::vector<ChunkKey> chunksToLoadQueue;
 std::vector<ChunkKey> chunksToUnloadQueue;
 
+uint32_t hash2D(int x, int y, int seed = 0) {
+    uint32_t h = static_cast<uint32_t>(x) * 374761393u
+        + static_cast<uint32_t>(y) * 668265263u
+        + static_cast<uint32_t>(seed) * 982451653u; // grands nombres premiers
+    h = (h ^ (h >> 13)) * 1274126177u;
+    h ^= (h >> 16);
+    return h;
+}
+
+bool inChunk(int i, int j, int k) {
+    return 0 <= i && i < CHUNKWIDTH && 0 <= j && j < CHUNKHEIGHT && 0 <= k && k < CHUNKWIDTH;
+}
+
+
 void initChunk(chunk& chunk, int x, int y) {
     ChunkKey key;
     key.x = x;
     key.y = y;
     chunk.key = key;
+    chunk.decorated = false;
     chunk.blocks.resize(CHUNKWIDTH, vector<vector<signed char>>(CHUNKHEIGHT, vector<signed char>(CHUNKWIDTH, -1)));
 
     for (int i = 0; i < CHUNKWIDTH; ++i) {
         for (int k = 0; k < CHUNKWIDTH; ++k) {
             for (int j = 0; j < CHUNKHEIGHT; ++j) {
-                double h = db::perlin((double)(i + key.x * CHUNKWIDTH) / 128.0, (double)(k + key.y * CHUNKWIDTH) / 86.0, (double)(j) / 86.0);
+                double h = db::perlin((double)(i + key.x * CHUNKWIDTH) / 86.0, (double)(k + key.y * CHUNKWIDTH) / 86.0, (double)(j) / 86.0);
                 h += db::perlin((double)(i + key.x * CHUNKWIDTH) / 8.0, (double)(k + key.y * CHUNKWIDTH) / 8.0) * 0.08;
                 if ((h + 1.0)*0.5 > (double)j / CHUNKHEIGHT) {
                     chunk.blocks[i][j][k] = 0;
@@ -156,6 +173,7 @@ void initChunk(chunk& chunk, int x, int y) {
     }
     for (int i = 0; i < CHUNKWIDTH; ++i) {
         for (int k = 0; k < CHUNKWIDTH; ++k) {
+
             for (int j = 0; j < CHUNKHEIGHT-2; ++j) {
                 if (chunk.blocks[i][j][k] != -1 && chunk.blocks[i][j + 1][k] == -1) {
                     chunk.blocks[i][j][k] = 4;
@@ -163,6 +181,48 @@ void initChunk(chunk& chunk, int x, int y) {
                     chunk.blocks[i][j][k] = 3;
                 }
             }
+
+        }
+    }
+
+    //tree
+    for (int i = -3; i < CHUNKWIDTH+3; ++i) {
+        for (int k = -3; k < CHUNKWIDTH+3; ++k) {
+            if (hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, 0) % 100 < 1) {
+                int h = 0;
+                for (int j = CHUNKHEIGHT - 2; j > 0; --j) {
+                    double t = db::perlin((double)(i + key.x * CHUNKWIDTH) / 86.0, (double)(k + key.y * CHUNKWIDTH) / 86.0, (double)(j) / 86.0);
+                    t += db::perlin((double)(i + key.x * CHUNKWIDTH) / 8.0, (double)(k + key.y * CHUNKWIDTH) / 8.0) * 0.08;
+                    if ((t + 1.0) * 0.5 > (double)j / CHUNKHEIGHT) {
+                        h = j;
+                        break;
+                    }
+                }
+                if (inChunk(i, h + 1, k)) chunk.blocks[i][h + 1][k] = 1;
+                if (inChunk(i, h + 2, k)) chunk.blocks[i][h + 2][k] = 1;
+                if (inChunk(i, h + 3, k)) chunk.blocks[i][h + 3][k] = 1;
+                if (inChunk(i, h + 4, k)) chunk.blocks[i][h + 4][k] = 1;
+
+                if (inChunk(i + 1, h + 3, k + 0)) chunk.blocks[i + 1][h + 3][k + 0] = 6;
+                if (inChunk(i + 1, h + 3, k + 1)) chunk.blocks[i + 1][h + 3][k + 1] = 6;
+                if (inChunk(i + 1, h + 3, k - 1)) chunk.blocks[i + 1][h + 3][k - 1] = 6;
+                if (inChunk(i + 0, h + 3, k + 1)) chunk.blocks[i + 0][h + 3][k + 1] = 6;
+                if (inChunk(i + 0, h + 3, k - 1)) chunk.blocks[i + 0][h + 3][k - 1] = 6;
+                if (inChunk(i - 1, h + 3, k + 1)) chunk.blocks[i - 1][h + 3][k + 1] = 6;
+                if (inChunk(i - 1, h + 3, k + 0)) chunk.blocks[i - 1][h + 3][k + 0] = 6;
+                if (inChunk(i - 1, h + 3, k - 1)) chunk.blocks[i - 1][h + 3][k - 1] = 6;
+
+                if (inChunk(i + 1, h + 4, k + 0)) chunk.blocks[i + 1][h + 4][k + 0] = 6;
+                if (inChunk(i + 1, h + 4, k + 1)) chunk.blocks[i + 1][h + 4][k + 1] = 6;
+                if (inChunk(i + 1, h + 4, k - 1)) chunk.blocks[i + 1][h + 4][k - 1] = 6;
+                if (inChunk(i + 0, h + 4, k + 1)) chunk.blocks[i + 0][h + 4][k + 1] = 6;
+                if (inChunk(i + 0, h + 4, k - 1)) chunk.blocks[i + 0][h + 4][k - 1] = 6;
+                if (inChunk(i - 1, h + 4, k + 1)) chunk.blocks[i - 1][h + 4][k + 1] = 6;
+                if (inChunk(i - 1, h + 4, k + 0)) chunk.blocks[i - 1][h + 4][k + 0] = 6;
+                if (inChunk(i - 1, h + 4, k - 1)) chunk.blocks[i - 1][h + 4][k - 1] = 6;
+                if (inChunk(i + 0, h + 5, k + 0)) chunk.blocks[i + 0][h + 5][k + 0] = 6;
+            }
+        
         }
     }
 }
@@ -391,8 +451,8 @@ void unloadDistantChunks() {
         Chunk& chunk = pair.second;
 
         if (chunk.isActive) {
-            int distanceX = abs(chunk.key.x - pChunkX);
-            int distanceY = abs(chunk.key.y - pChunkY);
+            int distanceX = chunk.key.x - pChunkX;
+            int distanceY = chunk.key.y - pChunkY;
             int distanceSquared = distanceX * distanceX + distanceY * distanceY;
 
             if (distanceSquared > unloadDistance * unloadDistance) {
@@ -404,9 +464,7 @@ void unloadDistantChunks() {
     }
 }
 
-void processChunkQueues() {
-
-    
+void processChunkQueues() {    
     int unloadOps = 0;
     while (!chunksToUnloadQueue.empty() && unloadOps < maxChunksPerFrame) {
         ChunkKey key = chunksToUnloadQueue.front();
@@ -439,8 +497,8 @@ void processChunkQueues() {
         auto it = chunks.find(key);
         if (it == chunks.end()) {
             Chunk chunk;
-            initChunk(chunk, key.x, key.y);
             chunk.key = key;
+            initChunk(chunk, key.x, key.y);
             chunks[key] = chunk;
             it = chunks.find(key);
 
@@ -488,30 +546,6 @@ void processChunkQueues() {
     }
 }
 
-void decorateChunk() {
-    const int renderDistance = RENDER_DISTANCE;
-
-    int pChunkX = static_cast<int>(floor(camera.Position.x / CHUNKWIDTH));
-    int pChunkY = static_cast<int>(floor(camera.Position.z / CHUNKWIDTH));
-
-    for (int xOffset = -renderDistance; xOffset <= renderDistance; xOffset++) {
-        for (int yOffset = -renderDistance; yOffset <= renderDistance; yOffset++) {
-            int chunkX = pChunkX + xOffset;
-            int chunkY = pChunkY + yOffset;
-
-            int distanceSquared = xOffset * xOffset + yOffset * yOffset;
-            if (distanceSquared <= renderDistance * renderDistance) {
-                ChunkKey key = { chunkX, chunkY };
-                auto it = chunks.find(key);
-                if (it != chunks.end() ) {
-                    Chunk& chunk = it->second;
-                    //chunk.blocks[2][80][1] = 1;
-                    it->second.decorated = true;
-                }
-            }
-        }
-    }
-}
 
 int main() {
     SetupRender("Minecraft", &camera);
@@ -519,7 +553,7 @@ int main() {
 
     loadChunksAround();
 
-    camera.Position = glm::vec3(0.0, 20.0, 0.0);
+    camera.Position = glm::vec3(0.0, 70.0, 0.0);
 
     Light* sun = createLight(DIRECTIONAL, false);
     setLightColor(sun, glm::vec3(1.0, 1.0, 1.0));
@@ -529,7 +563,6 @@ int main() {
         loadChunksAround();
         unloadDistantChunks();
         processChunkQueues();
-        decorateChunk();
 
         renderScene();
     }
