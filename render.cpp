@@ -422,7 +422,7 @@ void renderScene() {
     //calculating shadow
     int parityFrameShadowRender = 1; //min 1, max =~ 2
     glUseProgram(shaderProgramDepth);
-    glCullFace(GL_FRONT);
+    //glCullFace(GL_FRONT);
     for (int i = 0; i < lightList.size(); i++) {
         if (lightList[i]->castshadow && (frameCounter % parityFrameShadowRender == 0)) {
             glUniformMatrix4fv(glGetUniformLocation(shaderProgramDepth, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(getLightSpaceMatrix(lightList[i])));
@@ -825,6 +825,36 @@ void processInput(GLFWwindow* window){
         camera.ProcessKeyboard(DOWN, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
         camera.ProcessKeyboard(UP, deltaTime);
+
+
+    static bool leftWasPressed = false;
+    static bool rightWasPressed = false;
+
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+        if (!leftWasPressed) {
+            leftWasPressed = true;
+            camera.leftMousePressed = true;
+        }
+    }
+    else {
+        if (leftWasPressed) {
+            leftWasPressed = false;
+            camera.leftMousePressed = false;
+        }
+    }
+
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
+        if (!rightWasPressed) {
+            rightWasPressed = true;
+            camera.rightMousePressed = true;
+        }
+    }
+    else {
+        if (rightWasPressed) {
+            rightWasPressed = false;
+            camera.rightMousePressed = false;
+        }
+    }
 }
 
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn){

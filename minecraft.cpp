@@ -12,12 +12,7 @@
 
 #define CHUNKWIDTH 20
 #define CHUNKHEIGHT 100
-#define RENDER_DISTANCE 10
-int maxChunksPerFrame = 20;
-using namespace std;
-
-int textureMapWidth = 4;
-Camera camera;
+#define RENDER_DISTANCE 20
 
 #define air -1
 #define leaves -2
@@ -27,20 +22,19 @@ Camera camera;
 #define dirt 2
 #define grass 3
 #define diamond 4
+#define log 5
 
 
+int maxChunksPerFrame = 10;
+using namespace std;
 
-const vector<vector<int>> faceCorrespondence = {
-    {0, 0, 0, 0, 0, 0},
-    {1, 1, 1, 1, 1, 1},
-    {2, 2, 2, 2, 2, 2},
-    {3, 3, 3, 3, 3, 3},
+int textureMapWidth = 4;
+Camera camera;
 
-    {4, 4, 4, 5, 4, 4},
-    {6, 6, 6, 6, 6, 6},
-    {7, 7, 7, 7, 7, 7}
-};
-
+bool hitBlock = false;
+glm::ivec3 solidBlockPos;
+glm::ivec3 airBlockPos;
+signed char currentBlock = glass;
 
 void addTopFace(vector<float>& mesh, float x, float y, float z, float ou, float ov, float s) {
     mesh.insert(mesh.end(), {
@@ -115,6 +109,10 @@ vector<float> getFaceUV(int block, int face) {
     else if (block == dirt) { textureCo = std::vector<int>{ 3, 3, 3, 3, 3, 3 }[face]; }
     else if (block == grass) { textureCo = std::vector<int>{ 4, 4, 4, 5, 4, 4 }[face]; }
     else if (block == leaves) { textureCo = std::vector<int>{ 7, 7, 7, 7, 7, 7 }[face]; }
+    else if (block == diamond) { textureCo = std::vector<int>{ 6, 6, 6, 6, 6, 6 }[face]; }
+    else if (block == glass) { textureCo = std::vector<int>{ 2, 2, 2, 2, 2, 2 }[face]; }
+    else if (block == log) { textureCo = std::vector<int>{ 8, 8, 8, 9, 8, 8 }[face]; }
+
 
     vector<float> rez = { (float)(textureCo % textureMapWidth)/textureMapWidth,(float)(textureCo / textureMapWidth) / textureMapWidth,1.0f / textureMapWidth };
     return rez;
@@ -146,7 +144,6 @@ typedef struct chunk {
     Mesh* opaqueMeshObj = nullptr;
     Mesh* transpMeshObj = nullptr;
     bool isActive = false;
-    bool decorated = false;
 } Chunk;
 
 std::unordered_map<ChunkKey, Chunk> chunks;
@@ -172,7 +169,6 @@ void initChunk(chunk& chunk, int x, int y) {
     key.x = x;
     key.y = y;
     chunk.key = key;
-    chunk.decorated = false;
     chunk.blocks.resize(CHUNKWIDTH, vector<vector<signed char>>(CHUNKHEIGHT, vector<signed char>(CHUNKWIDTH, -1)));
 
     for (int i = 0; i < CHUNKWIDTH; ++i) {
@@ -216,29 +212,44 @@ void initChunk(chunk& chunk, int x, int y) {
                         break;
                     }
                 }
-                if (inChunk(i, h + 1, k)) chunk.blocks[i][h + 1][k] = planks;
-                if (inChunk(i, h + 2, k)) chunk.blocks[i][h + 2][k] = planks;
-                if (inChunk(i, h + 3, k)) chunk.blocks[i][h + 3][k] = planks;
-                if (inChunk(i, h + 4, k)) chunk.blocks[i][h + 4][k] = planks;
+                if (inChunk(i, h + 1, k)) chunk.blocks[i][h + 1][k] = log;
+                if (inChunk(i, h + 2, k)) chunk.blocks[i][h + 2][k] = log;
+                if (inChunk(i, h + 3, k)) chunk.blocks[i][h + 3][k] = log;
+                if (inChunk(i, h + 4, k)) chunk.blocks[i][h + 4][k] = log;
 
                 if (inChunk(i + 1, h + 3, k + 0)) chunk.blocks[i + 1][h + 3][k + 0] = leaves;
+                if (inChunk(i + 2, h + 3, k + 0)) chunk.blocks[i + 2][h + 3][k + 0] = leaves;
                 if (inChunk(i + 1, h + 3, k + 1)) chunk.blocks[i + 1][h + 3][k + 1] = leaves;
                 if (inChunk(i + 1, h + 3, k - 1)) chunk.blocks[i + 1][h + 3][k - 1] = leaves;
                 if (inChunk(i + 0, h + 3, k + 1)) chunk.blocks[i + 0][h + 3][k + 1] = leaves;
                 if (inChunk(i + 0, h + 3, k - 1)) chunk.blocks[i + 0][h + 3][k - 1] = leaves;
+                if (inChunk(i + 0, h + 3, k + 2)) chunk.blocks[i + 0][h + 3][k + 2] = leaves;
+                if (inChunk(i + 0, h + 3, k - 2)) chunk.blocks[i + 0][h + 3][k - 2] = leaves;
                 if (inChunk(i - 1, h + 3, k + 1)) chunk.blocks[i - 1][h + 3][k + 1] = leaves;
                 if (inChunk(i - 1, h + 3, k + 0)) chunk.blocks[i - 1][h + 3][k + 0] = leaves;
+                if (inChunk(i - 2, h + 3, k + 0)) chunk.blocks[i - 2][h + 3][k + 0] = leaves;
                 if (inChunk(i - 1, h + 3, k - 1)) chunk.blocks[i - 1][h + 3][k - 1] = leaves;
 
                 if (inChunk(i + 1, h + 4, k + 0)) chunk.blocks[i + 1][h + 4][k + 0] = leaves;
+                if (inChunk(i + 2, h + 4, k + 0)) chunk.blocks[i + 2][h + 4][k + 0] = leaves;
                 if (inChunk(i + 1, h + 4, k + 1)) chunk.blocks[i + 1][h + 4][k + 1] = leaves;
                 if (inChunk(i + 1, h + 4, k - 1)) chunk.blocks[i + 1][h + 4][k - 1] = leaves;
                 if (inChunk(i + 0, h + 4, k + 1)) chunk.blocks[i + 0][h + 4][k + 1] = leaves;
                 if (inChunk(i + 0, h + 4, k - 1)) chunk.blocks[i + 0][h + 4][k - 1] = leaves;
+                if (inChunk(i + 0, h + 4, k + 2)) chunk.blocks[i + 0][h + 4][k + 2] = leaves;
+                if (inChunk(i + 0, h + 4, k - 2)) chunk.blocks[i + 0][h + 4][k - 2] = leaves;
                 if (inChunk(i - 1, h + 4, k + 1)) chunk.blocks[i - 1][h + 4][k + 1] = leaves;
                 if (inChunk(i - 1, h + 4, k + 0)) chunk.blocks[i - 1][h + 4][k + 0] = leaves;
+                if (inChunk(i - 2, h + 4, k + 0)) chunk.blocks[i - 2][h + 4][k + 0] = leaves;
                 if (inChunk(i - 1, h + 4, k - 1)) chunk.blocks[i - 1][h + 4][k - 1] = leaves;
+
                 if (inChunk(i + 0, h + 5, k + 0)) chunk.blocks[i + 0][h + 5][k + 0] = leaves;
+                if (inChunk(i + 1, h + 5, k + 0)) chunk.blocks[i + 1][h + 5][k + 0] = leaves;
+                if (inChunk(i - 1, h + 5, k + 0)) chunk.blocks[i - 1][h + 5][k + 0] = leaves;
+                if (inChunk(i + 0, h + 5, k + 1)) chunk.blocks[i + 0][h + 5][k + 1] = leaves;
+                if (inChunk(i + 0, h + 5, k - 1)) chunk.blocks[i + 0][h + 5][k - 1] = leaves;
+
+                if (inChunk(i + 0, h + 6, k + 0)) chunk.blocks[i + 0][h + 6][k + 0] = leaves;
             }
         
         }
@@ -247,6 +258,7 @@ void initChunk(chunk& chunk, int x, int y) {
 
 void updateMesh(chunk& chunk) {
     chunk.opaqueMesh.clear();
+    chunk.transpMesh.clear();
 
     ChunkKey westKey = { chunk.key.x - 1, chunk.key.y };
     ChunkKey eastKey = { chunk.key.x + 1, chunk.key.y };
@@ -579,13 +591,156 @@ void processChunkQueues() {
 }
 
 
+void raycastDDA(glm::vec3 start, glm::vec3 direction_, float maxDistance = 7.0f) {
+    hitBlock = false;
+    glm::vec3 direction = glm::normalize(direction_);
+    glm::vec3 pos = start;
+    glm::ivec3 blockPos = glm::ivec3(floor(pos.x), floor(pos.y), floor(pos.z));
+    glm::ivec3 lastAirPos = blockPos;
+
+    glm::ivec3 step;
+    glm::vec3 deltaDist;
+    glm::vec3 sideDist;
+
+    float currentDistance = 0.0f;
+
+    if (direction.x < 0) {
+        step.x = -1;
+        deltaDist.x = -1.0f / direction.x;
+        sideDist.x = (pos.x - blockPos.x) * deltaDist.x;
+    }else {
+        step.x = 1;
+        deltaDist.x = 1.0f / direction.x;
+        sideDist.x = (blockPos.x + 1.0f - pos.x) * deltaDist.x;
+    }
+
+    if (direction.y < 0) {
+        step.y = -1;
+        deltaDist.y = -1.0f / direction.y;
+        sideDist.y = (pos.y - blockPos.y) * deltaDist.y;
+    }else {
+        step.y = 1;
+        deltaDist.y = 1.0f / direction.y;
+        sideDist.y = (blockPos.y + 1.0f - pos.y) * deltaDist.y;
+    }
+
+    if (direction.z < 0) {
+        step.z = -1;
+        deltaDist.z = -1.0f / direction.z;
+        sideDist.z = (pos.z - blockPos.z) * deltaDist.z;
+    }else {
+        step.z = 1;
+        deltaDist.z = 1.0f / direction.z;
+        sideDist.z = (blockPos.z + 1.0f - pos.z) * deltaDist.z;
+    }
+
+    while (currentDistance < maxDistance) {
+        int chunkX = static_cast<int>(floor((float)blockPos.x / CHUNKWIDTH));
+        int chunkZ = static_cast<int>(floor((float)blockPos.z / CHUNKWIDTH));
+        ChunkKey chunkKey = { chunkX, chunkZ };
+
+        auto chunkIt = chunks.find(chunkKey);
+        if (chunkIt == chunks.end() || !chunkIt->second.isActive) {
+            hitBlock = false;
+            break;
+        }
+
+        
+        int localX = blockPos.x - chunkX * CHUNKWIDTH;
+        int localZ = blockPos.z - chunkZ * CHUNKWIDTH;
+
+        
+        if (localX >= 0 && localX < CHUNKWIDTH &&
+            blockPos.y >= 0 && blockPos.y < CHUNKHEIGHT &&
+            localZ >= 0 && localZ < CHUNKWIDTH) {
+
+            
+            signed char blockType = chunkIt->second.blocks[localX][blockPos.y][localZ];
+
+            
+            if (blockType != air) {
+                hitBlock = true;
+                solidBlockPos = blockPos;
+                airBlockPos = lastAirPos;
+                //distance = currentDistance;
+                return;
+            }            
+            lastAirPos = blockPos;
+        }
+
+        if (sideDist.x < sideDist.y && sideDist.x < sideDist.z) {
+            sideDist.x += deltaDist.x;
+            blockPos.x += step.x;
+            currentDistance = sideDist.x - deltaDist.x;
+        }
+        else if (sideDist.y < sideDist.z) {
+            sideDist.y += deltaDist.y;
+            blockPos.y += step.y;
+            currentDistance = sideDist.y - deltaDist.y;
+        }
+        else {
+            sideDist.z += deltaDist.z;
+            blockPos.z += step.z;
+            currentDistance = sideDist.z - deltaDist.z;
+        }
+    }
+
+}
+
+void processClick() {
+    const double CLICK_COOLDOWN = 0.3;
+
+    static double lastClickTimeL = 0.0;
+    static double lastClickTimeR = 0.0;
+    double currentTime = glfwGetTime();
+
+    if (!camera.leftMousePressed) {
+        lastClickTimeL = 0.0;
+    }
+    if (camera.leftMousePressed && (currentTime - lastClickTimeL) >= CLICK_COOLDOWN) {
+        lastClickTimeL = currentTime;
+        int chunkX = static_cast<int>(floor((float)solidBlockPos.x / CHUNKWIDTH));
+        int chunkZ = static_cast<int>(floor((float)solidBlockPos.z / CHUNKWIDTH));
+        ChunkKey chunkKey = { chunkX, chunkZ };
+        auto chunkIt = chunks.find(chunkKey);
+        if (chunkIt != chunks.end() && chunkIt->second.isActive) {
+            int localX = solidBlockPos.x - chunkX * CHUNKWIDTH;
+            int localZ = solidBlockPos.z - chunkZ * CHUNKWIDTH;
+            chunkIt->second.blocks[localX][solidBlockPos.y][localZ] = air;
+
+            Chunk& chunk = chunkIt->second;
+            updateMesh(chunk);
+        }
+    }
+
+    if (!camera.rightMousePressed) {
+        lastClickTimeR = 0.0;
+    }
+    if (camera.rightMousePressed && (currentTime - lastClickTimeR) >= CLICK_COOLDOWN) {
+        lastClickTimeR = currentTime;
+        int chunkX = static_cast<int>(floor((float)airBlockPos.x / CHUNKWIDTH));
+        int chunkZ = static_cast<int>(floor((float)airBlockPos.z / CHUNKWIDTH));
+        ChunkKey chunkKey = { chunkX, chunkZ };
+        auto chunkIt = chunks.find(chunkKey);
+        if (chunkIt != chunks.end() && chunkIt->second.isActive) {
+            int localX = airBlockPos.x - chunkX * CHUNKWIDTH;
+            int localZ = airBlockPos.z - chunkZ * CHUNKWIDTH;
+            chunkIt->second.blocks[localX][airBlockPos.y][localZ] = currentBlock;
+
+            Chunk& chunk = chunkIt->second;
+            updateMesh(chunk);
+        }
+    }
+}
+
+
 int main() {
     SetupRender("Minecraft", &camera);
     
 
     loadChunksAround();
 
-    camera.Position = glm::vec3(0.0, 70.0, 0.0);
+    camera.Position = glm::vec3(0.0, 72.0, 0.0);
 
     Light* sun = createLight(DIRECTIONAL, true);
     setLightColor(sun, glm::vec3(1.0, 1.0, 1.0));
@@ -596,6 +751,11 @@ int main() {
         loadChunksAround();
         unloadDistantChunks();
         processChunkQueues();
+        raycastDDA(camera.Position, camera.Front);
+        if (hitBlock) {
+            processClick();
+            //cout << solidBlockPos.x << " " << solidBlockPos.y << " " << solidBlockPos.z << endl;
+        }
 
         renderScene();
     }
