@@ -133,4 +133,6 @@ void calculerEtAfficherMoyenneFPS(float fps, int tailleMax);
 
 GLFWwindow* getwindow();
 Camera getCamera();
+
+void updateBlockTarget(glm::vec3 Pos);
 #endif // RENDER_HPP

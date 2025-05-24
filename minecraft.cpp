@@ -12,7 +12,7 @@
 
 #define CHUNKWIDTH 20
 #define CHUNKHEIGHT 100
-#define RENDER_DISTANCE 20
+#define RENDER_DISTANCE 15
 
 #define air -1
 #define leaves -2
@@ -34,7 +34,56 @@ Camera camera;
 bool hitBlock = false;
 glm::ivec3 solidBlockPos;
 glm::ivec3 airBlockPos;
-signed char currentBlock = glass;
+signed char currentBlock = stone;
+Mesh* targetBlock;
+
+void initTargetBlock() {
+    float cube[] = {     
+        -1.0f,  1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+         1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+
+        -1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+
+         1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+
+        -1.0f, -1.0f,  1.0f,
+         1.0f, -1.0f,  1.0f,
+         1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+
+        -1.0f,  1.0f, -1.0f,
+         1.0f,  1.0f, -1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f, -1.0f,
+
+        -1.0f, -1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f
+    };
+    //targetBlock = setupOpaqueMeshTexture();
+   //setMeshTextureFile(targetBlock, "sources/textures/all.png");
+}
 
 void addTopFace(vector<float>& mesh, float x, float y, float z, float ou, float ov, float s) {
     mesh.insert(mesh.end(), {
@@ -753,8 +802,11 @@ int main() {
         processChunkQueues();
         raycastDDA(camera.Position, camera.Front);
         if (hitBlock) {
+            updateBlockTarget(glm::vec3(solidBlockPos));
             processClick();
             //cout << solidBlockPos.x << " " << solidBlockPos.y << " " << solidBlockPos.z << endl;
+        }else {
+            updateBlockTarget(glm::vec3(0.0,0.0,0.0));
         }
 
         renderScene();

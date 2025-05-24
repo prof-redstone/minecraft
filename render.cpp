@@ -53,6 +53,8 @@ static std::vector<Mesh*> opaqueMeshList;
 static std::vector<Mesh*> transpMeshList;
 static std::vector<Light*> lightList;
 
+static glm::vec3 blockTargetPos = glm::vec3(0.0,0.0,0.0);
+
 
 void SetupRender(const char * nom, Camera* cam) {
     if (InitGLFW(window, nom) == -1) std::cout << "Erreur in init GLFW" << std::endl;
@@ -544,14 +546,25 @@ void renderScene() {
         glUniformMatrix4fv(glGetUniformLocation(shaderLight, "model"), 1, GL_FALSE, glm::value_ptr(modelLight));
         glUniformMatrix4fv(glGetUniformLocation(shaderLight, "view"), 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(glGetUniformLocation(shaderLight, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-        glUniform4fv(glGetUniformLocation(shaderLight, "color"), 1, glm::value_ptr(glm::vec4((*lightList[i]).color, 1.0f)));
+        glUniform4fv(glGetUniformLocation(shaderLight, "color"), 1, glm::value_ptr(glm::vec4((*lightList[i]).color, 0.1f)));
 
         glBindVertexArray(VAO_LIGHT);
         glDrawArrays(GL_TRIANGLES, 0, 36);
     }
 
-    //---SkyBox---
-    //renderSkybox(shaderSkybox, VAO_SKY, cubemapTexture);
+    //render bock target : //re use same thing as light
+    glUseProgram(shaderLight);
+    glm::vec3 boxPos = blockTargetPos;
+    glm::mat4 modelLight = glm::mat4(glm::translate(glm::mat4(1.0f), boxPos + glm::vec3(0.5,0.5,0.5))); 
+    modelLight = glm::scale(modelLight, glm::vec3(0.501f));
+    glUniformMatrix4fv(glGetUniformLocation(shaderLight, "model"), 1, GL_FALSE, glm::value_ptr(modelLight));
+    glUniformMatrix4fv(glGetUniformLocation(shaderLight, "view"), 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(glGetUniformLocation(shaderLight, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+    glUniform4fv(glGetUniformLocation(shaderLight, "color"), 1, glm::value_ptr(glm::vec4(1.0,1.0,1.0, 0.2f)));
+    glBindVertexArray(VAO_LIGHT);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+
 
     glfwSwapBuffers(window);
     glfwPollEvents();
@@ -1014,4 +1027,8 @@ GLFWwindow* getwindow() {
 
 Camera getCamera() {
     return camera;
+}
+
+void updateBlockTarget(glm::vec3 Pos) {
+    blockTargetPos = Pos;
 }
