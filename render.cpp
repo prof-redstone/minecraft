@@ -462,7 +462,7 @@ void renderScene() {
 
     glUseProgram(shaderProgram);
 
-    glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 500.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.01f, 600.0f);
     glm::mat4 view = camera.GetViewMatrix();
 
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
@@ -553,17 +553,28 @@ void renderScene() {
     }
 
     //render bock target : //re use same thing as light
-    glUseProgram(shaderLight);
-    glm::vec3 boxPos = blockTargetPos;
-    glm::mat4 modelLight = glm::mat4(glm::translate(glm::mat4(1.0f), boxPos + glm::vec3(0.5,0.5,0.5))); 
-    modelLight = glm::scale(modelLight, glm::vec3(0.501f));
-    glUniformMatrix4fv(glGetUniformLocation(shaderLight, "model"), 1, GL_FALSE, glm::value_ptr(modelLight));
+    //glUseProgram(shaderLight);
+    glUniformMatrix4fv(glGetUniformLocation(shaderLight, "model"), 1, GL_FALSE, glm::value_ptr(glm::scale(glm::mat4(glm::translate(glm::mat4(1.0f), blockTargetPos + glm::vec3(0.5, 0.5, 0.5))), glm::vec3(0.505f))));
     glUniformMatrix4fv(glGetUniformLocation(shaderLight, "view"), 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(glGetUniformLocation(shaderLight, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
     glUniform4fv(glGetUniformLocation(shaderLight, "color"), 1, glm::value_ptr(glm::vec4(1.0,1.0,1.0, 0.18f)));
     glBindVertexArray(VAO_LIGHT);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
+
+    glm::vec3 boxPos = camera.Position + camera.Front * glm::float32(0.1);
+
+    // Version alternative avec lookAt (plus simple)
+    glm::mat4 billboardMatrix = glm::inverse(glm::lookAt(boxPos, camera.Position, camera.Up));
+    glm::mat4 modelMatrix = billboardMatrix * glm::scale(glm::mat4(1.0f), glm::vec3(0.0005f));
+
+
+    glUniformMatrix4fv(glGetUniformLocation(shaderLight, "model"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(shaderLight, "view"), 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(glGetUniformLocation(shaderLight, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+    glUniform4fv(glGetUniformLocation(shaderLight, "color"), 1, glm::value_ptr(glm::vec4(1.0, 1.0, 1.0, 1.0f)));
+    glBindVertexArray(VAO_LIGHT);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
 
 
     glfwSwapBuffers(window);

@@ -117,6 +117,9 @@ void main() {
 
     FragColor = vec4(result*gamma, mat.color.a);
     if (mat.enableTexture == 1) {
-        FragColor = vec4(result * gamma, mat.color.a) * texture(mat.text, fs_in.TextCoord);
+        vec4 textureCol = texture(mat.text, fs_in.TextCoord);
+        if (textureCol.w < 0.1)
+            discard;
+        FragColor = vec4(result * gamma, mat.color.a) * textureCol;
     }
 }
