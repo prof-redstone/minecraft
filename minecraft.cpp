@@ -34,56 +34,8 @@ Camera camera;
 bool hitBlock = false;
 glm::ivec3 solidBlockPos;
 glm::ivec3 airBlockPos;
-signed char currentBlock = stone;
-Mesh* targetBlock;
+signed char currentBlock = glass;
 
-void initTargetBlock() {
-    float cube[] = {     
-        -1.0f,  1.0f, -1.0f,
-        -1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-         1.0f,  1.0f, -1.0f,
-        -1.0f,  1.0f, -1.0f,
-
-        -1.0f, -1.0f,  1.0f,
-        -1.0f, -1.0f, -1.0f,
-        -1.0f,  1.0f, -1.0f,
-        -1.0f,  1.0f, -1.0f,
-        -1.0f,  1.0f,  1.0f,
-        -1.0f, -1.0f,  1.0f,
-
-         1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-
-        -1.0f, -1.0f,  1.0f,
-         1.0f, -1.0f,  1.0f,
-         1.0f, -1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f,
-        -1.0f, -1.0f, -1.0f,
-        -1.0f, -1.0f,  1.0f,
-
-        -1.0f,  1.0f, -1.0f,
-         1.0f,  1.0f, -1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-        -1.0f,  1.0f,  1.0f,
-        -1.0f,  1.0f, -1.0f,
-
-        -1.0f, -1.0f,  1.0f,
-        -1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,
-         1.0f, -1.0f,  1.0f,
-        -1.0f, -1.0f,  1.0f
-    };
-    //targetBlock = setupOpaqueMeshTexture();
-   //setMeshTextureFile(targetBlock, "sources/textures/all.png");
-}
 
 void addTopFace(vector<float>& mesh, float x, float y, float z, float ou, float ov, float s) {
     mesh.insert(mesh.end(), {
@@ -160,7 +112,7 @@ vector<float> getFaceUV(int block, int face) {
     else if (block == leaves) { textureCo = std::vector<int>{ 7, 7, 7, 7, 7, 7 }[face]; }
     else if (block == diamond) { textureCo = std::vector<int>{ 6, 6, 6, 6, 6, 6 }[face]; }
     else if (block == glass) { textureCo = std::vector<int>{ 2, 2, 2, 2, 2, 2 }[face]; }
-    else if (block == log) { textureCo = std::vector<int>{ 8, 8, 8, 9, 8, 8 }[face]; }
+    else if (block == log) { textureCo = std::vector<int>{ 8, 8, 9, 9, 8, 8 }[face]; }
 
 
     vector<float> rez = { (float)(textureCo % textureMapWidth)/textureMapWidth,(float)(textureCo / textureMapWidth) / textureMapWidth,1.0f / textureMapWidth };
@@ -742,46 +694,101 @@ void processClick() {
     static double lastClickTimeL = 0.0;
     static double lastClickTimeR = 0.0;
     double currentTime = glfwGetTime();
+    if (hitBlock) {
+        updateBlockTarget(glm::vec3(solidBlockPos));
+        if (!camera.leftMousePressed) {
+            lastClickTimeL = 0.0;
+        }
+        if (camera.leftMousePressed && (currentTime - lastClickTimeL) >= CLICK_COOLDOWN) {
+            lastClickTimeL = currentTime;
+            int chunkX = static_cast<int>(floor((float)solidBlockPos.x / CHUNKWIDTH));
+            int chunkZ = static_cast<int>(floor((float)solidBlockPos.z / CHUNKWIDTH));
+            ChunkKey chunkKey = { chunkX, chunkZ };
+            auto chunkIt = chunks.find(chunkKey);
+            if (chunkIt != chunks.end() && chunkIt->second.isActive) {
+                int localX = solidBlockPos.x - chunkX * CHUNKWIDTH;
+                int localZ = solidBlockPos.z - chunkZ * CHUNKWIDTH;
+                chunkIt->second.blocks[localX][solidBlockPos.y][localZ] = air;
 
-    if (!camera.leftMousePressed) {
-        lastClickTimeL = 0.0;
-    }
-    if (camera.leftMousePressed && (currentTime - lastClickTimeL) >= CLICK_COOLDOWN) {
-        lastClickTimeL = currentTime;
-        int chunkX = static_cast<int>(floor((float)solidBlockPos.x / CHUNKWIDTH));
-        int chunkZ = static_cast<int>(floor((float)solidBlockPos.z / CHUNKWIDTH));
-        ChunkKey chunkKey = { chunkX, chunkZ };
-        auto chunkIt = chunks.find(chunkKey);
-        if (chunkIt != chunks.end() && chunkIt->second.isActive) {
-            int localX = solidBlockPos.x - chunkX * CHUNKWIDTH;
-            int localZ = solidBlockPos.z - chunkZ * CHUNKWIDTH;
-            chunkIt->second.blocks[localX][solidBlockPos.y][localZ] = air;
+                Chunk& chunk = chunkIt->second;
+                updateMesh(chunk);
 
-            Chunk& chunk = chunkIt->second;
-            updateMesh(chunk);
+                if (localX == 0) {
+                    ChunkKey westKey = { chunk.key.x - 1, chunk.key.y }; 
+                    auto westIt = chunks.find(westKey);
+                    if (westIt != chunks.end()) {
+                        if (westIt->second.isActive) {
+                            updateMesh(westIt->second);
+                        }
+                    }
+                }
+                if (localX == CHUNKWIDTH-1) {
+                    ChunkKey eastKey = { chunk.key.x + 1, chunk.key.y };
+                    auto eastIt = chunks.find(eastKey);
+                    if (eastIt != chunks.end()) {
+                        if (eastIt->second.isActive) {
+                            updateMesh(eastIt->second);
+                        }
+                    }
+                }
+                if (localZ == 0) {
+                    ChunkKey northKey = { chunk.key.x, chunk.key.y - 1};
+                    auto northIt = chunks.find(northKey);
+                    if (northIt != chunks.end()) {
+                        if (northIt->second.isActive) {
+                            updateMesh(northIt->second);
+                        }
+                    }
+                }
+                if (localZ == CHUNKWIDTH - 1) {
+                    ChunkKey southKey = { chunk.key.x + 1, chunk.key.y + 1};
+                    auto southIt = chunks.find(southKey);
+                    if (southIt != chunks.end()) {
+                        if (southIt->second.isActive) {
+                            updateMesh(southIt->second);
+                        }
+                    }
+                }
+
+            }
+        }
+
+        if (!camera.rightMousePressed) {
+            lastClickTimeR = 0.0;
+        }
+        if (camera.rightMousePressed && (currentTime - lastClickTimeR) >= CLICK_COOLDOWN) {
+            lastClickTimeR = currentTime;
+            int chunkX = static_cast<int>(floor((float)airBlockPos.x / CHUNKWIDTH));
+            int chunkZ = static_cast<int>(floor((float)airBlockPos.z / CHUNKWIDTH));
+            ChunkKey chunkKey = { chunkX, chunkZ };
+            auto chunkIt = chunks.find(chunkKey);
+            if (chunkIt != chunks.end() && chunkIt->second.isActive) {
+                int localX = airBlockPos.x - chunkX * CHUNKWIDTH;
+                int localZ = airBlockPos.z - chunkZ * CHUNKWIDTH;
+                chunkIt->second.blocks[localX][airBlockPos.y][localZ] = currentBlock;
+
+                Chunk& chunk = chunkIt->second;
+                updateMesh(chunk);
+            }
         }
     }
-
-    if (!camera.rightMousePressed) {
-        lastClickTimeR = 0.0;
+    else {
+        updateBlockTarget(glm::vec3(0.0, 0.0, 0.0));
     }
-    if (camera.rightMousePressed && (currentTime - lastClickTimeR) >= CLICK_COOLDOWN) {
-        lastClickTimeR = currentTime;
-        int chunkX = static_cast<int>(floor((float)airBlockPos.x / CHUNKWIDTH));
-        int chunkZ = static_cast<int>(floor((float)airBlockPos.z / CHUNKWIDTH));
-        ChunkKey chunkKey = { chunkX, chunkZ };
-        auto chunkIt = chunks.find(chunkKey);
-        if (chunkIt != chunks.end() && chunkIt->second.isActive) {
-            int localX = airBlockPos.x - chunkX * CHUNKWIDTH;
-            int localZ = airBlockPos.z - chunkZ * CHUNKWIDTH;
-            chunkIt->second.blocks[localX][airBlockPos.y][localZ] = currentBlock;
 
-            Chunk& chunk = chunkIt->second;
-            updateMesh(chunk);
-        }
-    }
+    
 }
 
+void processKey() {
+    if (camera.key1Pressed) currentBlock = stone;
+    if (camera.key2Pressed) currentBlock = glass;
+    if (camera.key3Pressed) currentBlock = planks;
+    if (camera.key4Pressed) currentBlock = dirt;
+    if (camera.key5Pressed) currentBlock = log;
+    if (camera.key6Pressed) currentBlock = grass;
+    if (camera.key7Pressed) currentBlock = diamond;
+    if (camera.key8Pressed) currentBlock = leaves;
+}
 
 int main() {
     SetupRender("Minecraft", &camera);
@@ -793,7 +800,7 @@ int main() {
 
     Light* sun = createLight(DIRECTIONAL, true);
     setLightColor(sun, glm::vec3(1.0, 1.0, 1.0));
-    setLightIntensity(sun, 0.5);
+    setLightIntensity(sun, 0.6);
     setLightDirection(sun, glm::vec3(-3.0f, 3.8f, -5.0f));
 
     while (shouldCloseTheApp()) {
@@ -801,13 +808,9 @@ int main() {
         unloadDistantChunks();
         processChunkQueues();
         raycastDDA(camera.Position, camera.Front);
-        if (hitBlock) {
-            updateBlockTarget(glm::vec3(solidBlockPos));
-            processClick();
-            //cout << solidBlockPos.x << " " << solidBlockPos.y << " " << solidBlockPos.z << endl;
-        }else {
-            updateBlockTarget(glm::vec3(0.0,0.0,0.0));
-        }
+        processKey();
+        processClick();
+        
 
         renderScene();
     }

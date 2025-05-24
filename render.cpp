@@ -560,7 +560,7 @@ void renderScene() {
     glUniformMatrix4fv(glGetUniformLocation(shaderLight, "model"), 1, GL_FALSE, glm::value_ptr(modelLight));
     glUniformMatrix4fv(glGetUniformLocation(shaderLight, "view"), 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(glGetUniformLocation(shaderLight, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-    glUniform4fv(glGetUniformLocation(shaderLight, "color"), 1, glm::value_ptr(glm::vec4(1.0,1.0,1.0, 0.2f)));
+    glUniform4fv(glGetUniformLocation(shaderLight, "color"), 1, glm::value_ptr(glm::vec4(1.0,1.0,1.0, 0.18f)));
     glBindVertexArray(VAO_LIGHT);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -868,6 +868,15 @@ void processInput(GLFWwindow* window){
             camera.rightMousePressed = false;
         }
     }
+    camera.key1Pressed = (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS);
+    camera.key2Pressed = (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS);
+    camera.key3Pressed = (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS);
+    camera.key4Pressed = (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS);
+    camera.key5Pressed = (glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS);
+    camera.key6Pressed = (glfwGetKey(window, GLFW_KEY_6) == GLFW_PRESS);
+    camera.key7Pressed = (glfwGetKey(window, GLFW_KEY_7) == GLFW_PRESS);
+    camera.key8Pressed = (glfwGetKey(window, GLFW_KEY_8) == GLFW_PRESS);
+    camera.key9Pressed = (glfwGetKey(window, GLFW_KEY_9) == GLFW_PRESS);
 }
 
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn){

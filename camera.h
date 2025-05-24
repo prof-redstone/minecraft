@@ -42,7 +42,15 @@ public:
 
     bool leftMousePressed = false;
     bool rightMousePressed = false;
-
+    bool key1Pressed = false;
+    bool key2Pressed = false;
+    bool key3Pressed = false;
+    bool key4Pressed = false;
+    bool key5Pressed = false;
+    bool key6Pressed = false;
+    bool key7Pressed = false;
+    bool key8Pressed = false;
+    bool key9Pressed = false;
 
     // constructor with vectors
     Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
