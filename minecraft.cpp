@@ -40,6 +40,7 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 bool flyMode = false;
+float playerHeight = 1.8;
 
 
 void addTopFace(vector<float>& mesh, float x, float y, float z, float ou, float ov, float s) {
@@ -770,7 +771,10 @@ void processClick() {
             if (chunkIt != chunks.end() && chunkIt->second.isActive) {
                 int localX = airBlockPos.x - chunkX * CHUNKWIDTH;
                 int localZ = airBlockPos.z - chunkZ * CHUNKWIDTH;
-                chunkIt->second.blocks[localX][airBlockPos.y][localZ] = currentBlock;
+                glm::ivec3 posPlayerInt = glm::ivec3(glm::floor(camera.Position.x), glm::floor(camera.Position.y), glm::floor(camera.Position.z));
+                if (airBlockPos != posPlayerInt && airBlockPos != (posPlayerInt - glm::ivec3(0, 1, 0))) {
+                    chunkIt->second.blocks[localX][airBlockPos.y][localZ] = currentBlock;
+                }
 
                 Chunk& chunk = chunkIt->second;
                 updateMesh(chunk);
@@ -827,8 +831,12 @@ void processKey() {
         //glm::ivec3 blockPos = glm::ivec3(floor(camera.Position.x), floor(camera.Position.y), floor(camera.Position.z));
         bool leftBlockFree = true;
         bool rightBlockFree = true;
-        bool upBlockFree = true;
-        bool downBlockFree = true;
+        bool forwardBlockFree = true;
+        bool BackwardBlockFree = true;
+
+        int blockHead = (int)(camera.Position.y);
+        int blockBelly = (int)(camera.Position.y - playerHeight/2);
+        int blockFoot = (int)(camera.Position.y - playerHeight);
 
 
         int chunkXLeft = static_cast<int>(floor((float)(camera.Position.x - largeur) / CHUNKWIDTH));
@@ -838,7 +846,7 @@ void processKey() {
         ChunkKey chunkKeyLeft = { chunkXLeft, chunkZLeft };
         auto chunkItLeft = chunks.find(chunkKeyLeft);
         if (chunkItLeft != chunks.end() && chunkItLeft->second.isActive) {
-            if (chunkItLeft->second.blocks[localXLeft][(int)(camera.Position.y)-1][localZLeft] != air || chunkItLeft->second.blocks[localXLeft][(int)(camera.Position.y)][localZLeft] != air) {
+            if (chunkItLeft->second.blocks[localXLeft][blockHead][localZLeft] != air || chunkItLeft->second.blocks[localXLeft][blockBelly][localZLeft] != air || chunkItLeft->second.blocks[localXLeft][blockFoot][localZLeft] != air) {
                 leftBlockFree = false;
             }
         }
@@ -850,33 +858,33 @@ void processKey() {
         ChunkKey chunkKeyRight = { chunkXRight, chunkZRight };
         auto chunkItRight = chunks.find(chunkKeyRight);
         if (chunkItRight != chunks.end() && chunkItRight->second.isActive) {
-            if (chunkItRight->second.blocks[localXRight][(int)(camera.Position.y)-1][localZRight] != air || chunkItRight->second.blocks[localXRight][(int)(camera.Position.y)][localZRight] != air) {
+            if (chunkItRight->second.blocks[localXRight][blockHead][localZRight] != air || chunkItRight->second.blocks[localXRight][blockBelly][localZRight] != air || chunkItRight->second.blocks[localXRight][blockFoot][localZRight] != air) {
                 rightBlockFree = false;
                 
             }
         }
 
-        int chunkXUp = static_cast<int>(floor((float)(camera.Position.x) / CHUNKWIDTH));
-        int chunkZUp = static_cast<int>(floor((float)(camera.Position.z + largeur) / CHUNKWIDTH));
-        int localXUp = (camera.Position.x) - chunkXUp * CHUNKWIDTH;
-        int localZUp = (camera.Position.z + largeur) - chunkZUp * CHUNKWIDTH;
-        ChunkKey chunkKeyUp = { chunkXUp, chunkZUp };
-        auto chunkItUp = chunks.find(chunkKeyUp);
-        if (chunkItUp != chunks.end() && chunkItUp->second.isActive) {
-            if (chunkItUp->second.blocks[localXUp][(int)(camera.Position.y)-1][localZUp] != air || chunkItUp->second.blocks[localXUp][(int)(camera.Position.y)][localZUp] != air) {
-                upBlockFree = false;
+        int chunkXForward = static_cast<int>(floor((float)(camera.Position.x) / CHUNKWIDTH));
+        int chunkZForward = static_cast<int>(floor((float)(camera.Position.z + largeur) / CHUNKWIDTH));
+        int localXForward = (camera.Position.x) - chunkXForward * CHUNKWIDTH;
+        int localZForward = (camera.Position.z + largeur) - chunkZForward * CHUNKWIDTH;
+        ChunkKey chunkKeyForward = { chunkXForward, chunkZForward };
+        auto chunkItForward = chunks.find(chunkKeyForward);
+        if (chunkItForward != chunks.end() && chunkItForward->second.isActive) {
+            if (chunkItForward->second.blocks[localXForward][blockHead][localZForward] != air || chunkItForward->second.blocks[localXForward][blockBelly][localZForward] != air || chunkItForward->second.blocks[localXForward][blockFoot][localZForward] != air) {
+                forwardBlockFree = false;
             }
         }
 
-        int chunkXDown = static_cast<int>(floor((float)(camera.Position.x) / CHUNKWIDTH));
-        int chunkZDown = static_cast<int>(floor((float)(camera.Position.z - largeur) / CHUNKWIDTH));
-        int localXDown = (camera.Position.x) - chunkXDown * CHUNKWIDTH;
-        int localZDown = (camera.Position.z - largeur) - chunkZDown * CHUNKWIDTH;
-        ChunkKey chunkKeyDown = { chunkXDown, chunkZDown };
-        auto chunkItDown = chunks.find(chunkKeyDown);
-        if (chunkItDown != chunks.end() && chunkItDown->second.isActive) {
-            if (chunkItDown->second.blocks[localXDown][(int)(camera.Position.y)-1][localZDown] != air || chunkItDown->second.blocks[localXDown][(int)(camera.Position.y)][localZDown] != air) {
-                downBlockFree = false;
+        int chunkXBackward = static_cast<int>(floor((float)(camera.Position.x) / CHUNKWIDTH));
+        int chunkZBackward = static_cast<int>(floor((float)(camera.Position.z - largeur) / CHUNKWIDTH));
+        int localXBackward = (camera.Position.x) - chunkXBackward * CHUNKWIDTH;
+        int localZBackward = (camera.Position.z - largeur) - chunkZBackward * CHUNKWIDTH;
+        ChunkKey chunkKeyBackward = { chunkXBackward, chunkZBackward };
+        auto chunkItBackward = chunks.find(chunkKeyBackward);
+        if (chunkItBackward != chunks.end() && chunkItBackward->second.isActive) {
+            if (chunkItBackward->second.blocks[localXBackward][blockHead][localZBackward] != air || chunkItBackward->second.blocks[localXBackward][blockBelly][localZBackward] != air || chunkItBackward->second.blocks[localXBackward][blockFoot][localZBackward] != air) {
+                BackwardBlockFree = false;
             }
         }
 
@@ -886,15 +894,64 @@ void processKey() {
         if (rightBlockFree && dPos.x > 0) {
             camera.Position.x += dPos.x;
         }
-        if (upBlockFree && dPos.z > 0) {
+        if (forwardBlockFree && dPos.z > 0) {
             camera.Position.z += dPos.z;
         }
-        if (downBlockFree && dPos.z < 0) {
+        if (BackwardBlockFree && dPos.z < 0) {
             camera.Position.z += dPos.z;
         }
 
+        const float accY = -0.0008;
+        const float maxYspeed = 0.07;
+        const float jumpHeight = 0.052;
+        camera.Yspeed = camera.Yspeed < -maxYspeed ? -maxYspeed : camera.Yspeed + accY;
+        float posY = camera.Position.y + camera.Yspeed;
+        bool isOnGround = false;
 
-        //camera.Position += dPos;
+        int chunkX = static_cast<int>(floor((float)(camera.Position.x) / CHUNKWIDTH));
+        int chunkZ = static_cast<int>(floor((float)(camera.Position.z) / CHUNKWIDTH));
+        int localX = (camera.Position.x) - chunkX * CHUNKWIDTH;
+        int localZ = (camera.Position.z) - chunkZ * CHUNKWIDTH;
+        ChunkKey chunkKey = { chunkX, chunkZ };
+        auto chunkIt = chunks.find(chunkKey);
+
+        if (chunkIt != chunks.end() && chunkIt->second.isActive) {
+            if (camera.Yspeed <= 0.0) {
+                bool blockBelow = chunkIt->second.blocks[localX][(int)(posY - playerHeight)][localZ] != air;
+                
+                if (blockBelow) {
+                    float desiredY = (float)((int)(posY - playerHeight) + 1) + playerHeight;
+                    camera.Position.y = desiredY;
+                    camera.Yspeed = 0.0f;
+                    isOnGround = true;
+                } else {
+                    camera.Position.y = posY;
+                }
+            }
+            else if (camera.Yspeed > 0.0) {
+                bool blockAbove = chunkIt->second.blocks[localX][(int)(posY)][localZ] != air;
+                
+                if (blockAbove) {
+                    float desiredY = (float)((int)(posY));
+                    camera.Position.y = desiredY;
+                    camera.Yspeed = 0.0f;
+                } else {
+                    camera.Position.y = posY;
+                }
+            }
+        }
+
+        if (camera.spacePressed == GLFW_PRESS && isOnGround) {
+            camera.Yspeed = jumpHeight;
+        }
+        
+
+        if (camera.Position.y <= playerHeight) {
+            camera.Position.y = CHUNKHEIGHT-1;
+        }
+        if (camera.Position.y >= CHUNKHEIGHT - 1) {
+            camera.Position.y = CHUNKHEIGHT - 1;
+        }
     }
 }
 

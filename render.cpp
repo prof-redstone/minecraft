@@ -845,6 +845,7 @@ void processInput(GLFWwindow* window){
     camera.forwardPressed = glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS;
     camera.backwardPressed = glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS;
 
+    camera.spacePressed = glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
 
     camera.leftMousePressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
     camera.rightMousePressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
