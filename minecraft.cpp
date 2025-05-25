@@ -36,6 +36,11 @@ glm::ivec3 solidBlockPos;
 glm::ivec3 airBlockPos;
 signed char currentBlock = glass;
 
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
+
+bool flyMode = false;
+
 
 void addTopFace(vector<float>& mesh, float x, float y, float z, float ou, float ov, float s) {
     mesh.insert(mesh.end(), {
@@ -788,6 +793,109 @@ void processKey() {
     if (camera.key6Pressed) currentBlock = grass;
     if (camera.key7Pressed) currentBlock = diamond;
     if (camera.key8Pressed) currentBlock = leaves;
+
+    if (flyMode) {
+        if (camera.forwardPressed == GLFW_PRESS)
+            camera.ProcessKeyboard(FORWARD, deltaTime);
+        if (camera.backwardPressed == GLFW_PRESS)
+            camera.ProcessKeyboard(BACKWARD, deltaTime);
+        if (camera.leftPressed == GLFW_PRESS)
+            camera.ProcessKeyboard(LEFT, deltaTime);
+        if (camera.rightPressed == GLFW_PRESS)
+            camera.ProcessKeyboard(RIGHT, deltaTime);
+        if (camera.downPressed == GLFW_PRESS)
+            camera.ProcessKeyboard(DOWN, deltaTime);
+        if (camera.upPressed == GLFW_PRESS)
+            camera.ProcessKeyboard(UP, deltaTime);
+    }
+    else {
+        glm::vec3 dPos = glm::vec3(0.0, 0.0, 0.0);
+        if (camera.forwardPressed == GLFW_PRESS) {
+            dPos += glm::normalize(glm::vec3(camera.Front.x, 0.0f, camera.Front.z)) * camera.MovementSpeed * deltaTime;
+        }
+        if (camera.backwardPressed == GLFW_PRESS) {
+            dPos += glm::normalize(glm::vec3(camera.Front.x, 0.0f, camera.Front.z)) * -camera.MovementSpeed * deltaTime;
+        }
+        if (camera.rightPressed == GLFW_PRESS) {
+            dPos += glm::normalize(glm::vec3(camera.Right.x, 0.0f, camera.Right.z)) * camera.MovementSpeed * deltaTime;
+        }
+        if (camera.leftPressed == GLFW_PRESS) {
+            dPos += glm::normalize(glm::vec3(camera.Right.x, 0.0f, camera.Right.z)) * -camera.MovementSpeed * deltaTime;
+        }
+
+        float largeur = 0.1;
+        //glm::ivec3 blockPos = glm::ivec3(floor(camera.Position.x), floor(camera.Position.y), floor(camera.Position.z));
+        bool leftBlockFree = true;
+        bool rightBlockFree = true;
+        bool upBlockFree = true;
+        bool downBlockFree = true;
+
+
+        int chunkXLeft = static_cast<int>(floor((float)(camera.Position.x - largeur) / CHUNKWIDTH));
+        int chunkZLeft = static_cast<int>(floor((float)(camera.Position.z) / CHUNKWIDTH));
+        int localXLeft = (camera.Position.x - largeur) - chunkXLeft * CHUNKWIDTH;
+        int localZLeft = (camera.Position.z) - chunkZLeft * CHUNKWIDTH;
+        ChunkKey chunkKeyLeft = { chunkXLeft, chunkZLeft };
+        auto chunkItLeft = chunks.find(chunkKeyLeft);
+        if (chunkItLeft != chunks.end() && chunkItLeft->second.isActive) {
+            if (chunkItLeft->second.blocks[localXLeft][(int)(camera.Position.y)-1][localZLeft] != air || chunkItLeft->second.blocks[localXLeft][(int)(camera.Position.y)][localZLeft] != air) {
+                leftBlockFree = false;
+            }
+        }
+
+        int chunkXRight = static_cast<int>(floor((float)(camera.Position.x + largeur) / CHUNKWIDTH));
+        int chunkZRight = static_cast<int>(floor((float)(camera.Position.z) / CHUNKWIDTH));
+        int localXRight = (camera.Position.x + largeur) - chunkXRight * CHUNKWIDTH;
+        int localZRight = (camera.Position.z) - chunkZRight * CHUNKWIDTH;
+        ChunkKey chunkKeyRight = { chunkXRight, chunkZRight };
+        auto chunkItRight = chunks.find(chunkKeyRight);
+        if (chunkItRight != chunks.end() && chunkItRight->second.isActive) {
+            if (chunkItRight->second.blocks[localXRight][(int)(camera.Position.y)-1][localZRight] != air || chunkItRight->second.blocks[localXRight][(int)(camera.Position.y)][localZRight] != air) {
+                rightBlockFree = false;
+                
+            }
+        }
+
+        int chunkXUp = static_cast<int>(floor((float)(camera.Position.x) / CHUNKWIDTH));
+        int chunkZUp = static_cast<int>(floor((float)(camera.Position.z + largeur) / CHUNKWIDTH));
+        int localXUp = (camera.Position.x) - chunkXUp * CHUNKWIDTH;
+        int localZUp = (camera.Position.z + largeur) - chunkZUp * CHUNKWIDTH;
+        ChunkKey chunkKeyUp = { chunkXUp, chunkZUp };
+        auto chunkItUp = chunks.find(chunkKeyUp);
+        if (chunkItUp != chunks.end() && chunkItUp->second.isActive) {
+            if (chunkItUp->second.blocks[localXUp][(int)(camera.Position.y)-1][localZUp] != air || chunkItUp->second.blocks[localXUp][(int)(camera.Position.y)][localZUp] != air) {
+                upBlockFree = false;
+            }
+        }
+
+        int chunkXDown = static_cast<int>(floor((float)(camera.Position.x) / CHUNKWIDTH));
+        int chunkZDown = static_cast<int>(floor((float)(camera.Position.z - largeur) / CHUNKWIDTH));
+        int localXDown = (camera.Position.x) - chunkXDown * CHUNKWIDTH;
+        int localZDown = (camera.Position.z - largeur) - chunkZDown * CHUNKWIDTH;
+        ChunkKey chunkKeyDown = { chunkXDown, chunkZDown };
+        auto chunkItDown = chunks.find(chunkKeyDown);
+        if (chunkItDown != chunks.end() && chunkItDown->second.isActive) {
+            if (chunkItDown->second.blocks[localXDown][(int)(camera.Position.y)-1][localZDown] != air || chunkItDown->second.blocks[localXDown][(int)(camera.Position.y)][localZDown] != air) {
+                downBlockFree = false;
+            }
+        }
+
+        if (leftBlockFree && dPos.x < 0) {
+            camera.Position.x += dPos.x;
+        }
+        if (rightBlockFree && dPos.x > 0) {
+            camera.Position.x += dPos.x;
+        }
+        if (upBlockFree && dPos.z > 0) {
+            camera.Position.z += dPos.z;
+        }
+        if (downBlockFree && dPos.z < 0) {
+            camera.Position.z += dPos.z;
+        }
+
+
+        //camera.Position += dPos;
+    }
 }
 
 int main() {
@@ -796,7 +904,7 @@ int main() {
 
     loadChunksAround();
 
-    camera.Position = glm::vec3(0.0, 72.0, 0.0);
+    camera.Position = glm::vec3(1.0, 71.8, 1.0);
 
     Light* sun = createLight(DIRECTIONAL, true);
     setLightColor(sun, glm::vec3(1.0, 1.0, 1.0));
@@ -804,6 +912,11 @@ int main() {
     setLightDirection(sun, glm::vec3(-3.0f, 3.8f, -5.0f));
 
     while (shouldCloseTheApp()) {
+        float currentFrame = static_cast<float>(glfwGetTime());
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
+
         loadChunksAround();
         unloadDistantChunks();
         processChunkQueues();

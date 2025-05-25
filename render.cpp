@@ -837,48 +837,18 @@ void processInput(GLFWwindow* window){
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.ProcessKeyboard(FORWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.ProcessKeyboard(BACKWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera.ProcessKeyboard(LEFT, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera.ProcessKeyboard(RIGHT, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-        camera.ProcessKeyboard(DOWN, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-        camera.ProcessKeyboard(UP, deltaTime);
+
+    camera.leftPressed = glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS;
+    camera.rightPressed = glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS;
+    camera.upPressed = glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS;
+    camera.downPressed = glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS;
+    camera.forwardPressed = glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS;
+    camera.backwardPressed = glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS;
 
 
-    static bool leftWasPressed = false;
-    static bool rightWasPressed = false;
+    camera.leftMousePressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+    camera.rightMousePressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
 
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-        if (!leftWasPressed) {
-            leftWasPressed = true;
-            camera.leftMousePressed = true;
-        }
-    }
-    else {
-        if (leftWasPressed) {
-            leftWasPressed = false;
-            camera.leftMousePressed = false;
-        }
-    }
-
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
-        if (!rightWasPressed) {
-            rightWasPressed = true;
-            camera.rightMousePressed = true;
-        }
-    }
-    else {
-        if (rightWasPressed) {
-            rightWasPressed = false;
-            camera.rightMousePressed = false;
-        }
-    }
     camera.key1Pressed = (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS);
     camera.key2Pressed = (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS);
     camera.key3Pressed = (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS);
@@ -976,7 +946,6 @@ unsigned int ShaderLoader(const char* VertexShader, const char* FragmentShader) 
 
     return shaderProgram;
 }
-
 
 bool shouldCloseTheApp() {
     return !glfwWindowShouldClose(window);

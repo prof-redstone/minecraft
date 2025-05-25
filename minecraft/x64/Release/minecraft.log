@@ -1,4 +1,118 @@
-﻿  render.cpp
+﻿  minecraft.cpp
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\render.hpp(40,8): warning C4099: 'Light' : nom de type déjà rencontré avec 'class' et utilisant maintenant 'struct'
+  (compiler le fichier source 'minecraft.cpp')
+      C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\render.hpp(40,8):
+      voir la déclaration de 'Light'
+  
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(317,94): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(317,89): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(317,61): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(320,94): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(320,89): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(320,61): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(327,90): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(327,85): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(327,57): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(330,90): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(330,85): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(330,57): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(338,98): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(338,93): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(338,65): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(341,98): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(341,93): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(341,65): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(348,94): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(348,89): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(348,61): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(351,94): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(351,89): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(351,61): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(367,92): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(367,87): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(367,59): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(370,92): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(370,87): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(370,59): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(377,93): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(377,86): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(377,56): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(380,93): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(380,86): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(380,56): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(386,93): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(386,86): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(386,56): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(389,93): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(389,86): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(389,56): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(398,94): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(398,89): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(398,61): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(401,94): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(401,89): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(401,61): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(408,90): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(408,85): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(408,57): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(411,90): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(411,85): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(411,57): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(420,98): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(420,89): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(420,61): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(423,98): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(423,89): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(423,61): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(430,94): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(430,85): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(430,57): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(433,94): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(433,85): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(433,57): warning C4244: 'argument' : conversion de 'int' en 'float', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(826,23): warning C4305: 'initialisation' : troncation de 'double' à 'float'
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(836,24): warning C4244: 'initialisation' : conversion de 'T' en 'int', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(836,24): warning C4244:         with
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(836,24): warning C4244:         [
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(836,24): warning C4244:             T=float
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(836,24): warning C4244:         ]
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(837,24): warning C4244: 'initialisation' : conversion de 'T' en 'int', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(837,24): warning C4244:         with
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(837,24): warning C4244:         [
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(837,24): warning C4244:             T=float
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(837,24): warning C4244:         ]
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(848,25): warning C4244: 'initialisation' : conversion de 'T' en 'int', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(848,25): warning C4244:         with
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(848,25): warning C4244:         [
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(848,25): warning C4244:             T=float
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(848,25): warning C4244:         ]
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(849,25): warning C4244: 'initialisation' : conversion de 'T' en 'int', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(849,25): warning C4244:         with
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(849,25): warning C4244:         [
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(849,25): warning C4244:             T=float
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(849,25): warning C4244:         ]
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(861,22): warning C4244: 'initialisation' : conversion de 'T' en 'int', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(861,22): warning C4244:         with
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(861,22): warning C4244:         [
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(861,22): warning C4244:             T=float
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(861,22): warning C4244:         ]
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(862,22): warning C4244: 'initialisation' : conversion de 'T' en 'int', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(862,22): warning C4244:         with
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(862,22): warning C4244:         [
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(862,22): warning C4244:             T=float
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(862,22): warning C4244:         ]
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(873,24): warning C4244: 'initialisation' : conversion de 'T' en 'int', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(873,24): warning C4244:         with
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(873,24): warning C4244:         [
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(873,24): warning C4244:             T=float
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(873,24): warning C4244:         ]
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(874,24): warning C4244: 'initialisation' : conversion de 'T' en 'int', perte possible de données
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(874,24): warning C4244:         with
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(874,24): warning C4244:         [
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(874,24): warning C4244:             T=float
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(874,24): warning C4244:         ]
+C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\minecraft.cpp(911,28): warning C4305: 'argument' : troncation de 'double' à 'float'
+  render.cpp
 C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\render.hpp(40,8): warning C4099: 'Light' : nom de type déjà rencontré avec 'class' et utilisant maintenant 'struct'
   (compiler le fichier source 'render.cpp')
       C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\render.hpp(40,8):
@@ -13,9 +127,9 @@ C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\render.cpp(517,76)
 C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\render.cpp(533,76): warning C4267: 'argument' : conversion de 'size_t' en 'GLsizei', perte possible de données
 LINK : warning LNK4098: conflit entre la bibliothèque par défaut 'LIBCMT' et les autres bibliothèques ; utilisez /NODEFAULTLIB:library
   Génération de code en cours
-  14 of 1284 functions ( 1.1%) were compiled, the rest were copied from previous compilation.
-    9 functions were new in current compilation
-    25 functions had inline decision re-evaluated but remain unchanged
+  19 of 1284 functions ( 1.5%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    11 functions had inline decision re-evaluated but remain unchanged
   Fin de la génération du code
 glew32s.lib(glew.obj) : warning LNK4099: PDB '' n'a pu être trouvé avec 'glew32s.lib(glew.obj)' ou sur '' ; l'objet sera lié sans informations de débogage
   minecraft.vcxproj -> C:\Users\tomde\OneDrive\Documents\programmation\C++\minecraft\x64\Release\minecraft.exe
