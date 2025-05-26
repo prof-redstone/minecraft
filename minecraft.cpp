@@ -12,7 +12,7 @@
 
 #define CHUNKWIDTH 20
 #define CHUNKHEIGHT 100
-#define RENDER_DISTANCE 15
+#define RENDER_DISTANCE 10
 
 #define air -1
 #define leaves -2
@@ -25,7 +25,7 @@
 #define log 5
 
 
-int maxChunksPerFrame = 10;
+int maxChunksPerFrame = 20;
 using namespace std;
 
 int textureMapWidth = 4;
@@ -34,7 +34,7 @@ Camera camera;
 bool hitBlock = false;
 glm::ivec3 solidBlockPos;
 glm::ivec3 airBlockPos;
-signed char currentBlock = glass;
+signed char currentBlock = stone;
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -171,6 +171,26 @@ bool inChunk(int i, int j, int k) {
 }
 
 
+double blockDensity(int i, int j, int k, int seed) {
+    // mountainous, height, islandish.
+    double height = (double)(j*2) / CHUNKHEIGHT - 1.0; //hauteur j entre -1 et 1
+    double island = (db::perlin((double)i / 500.0, (double)k / 500.0, 100.0 * seed) -0.4) * 10.0;
+    if (island < -1.0) island = -1.0;
+    if (island > 1.0) island = 1.0;
+
+    double mountainous = db::perlin((double)i / 500.0, (double)k / 500.0, -100.0 * seed) * 1.5;
+	if (mountainous < -1.0) mountainous = -1.0;
+	if (mountainous > 1.0) mountainous = 1.0;
+
+
+	if (height < 0.0) {
+        height = -height * island;
+	}
+    double h = db::perlin((double)i / 86.0, (double)k / 86.0, (double)j / 86.0 + 100 * seed);
+    h += db::perlin((double)i / 8.0, (double)k / 8.0) * 0.08;
+    return h * (mountainous + 1.0) + height;
+}
+
 void initChunk(chunk& chunk, int x, int y) {
     ChunkKey key;
     key.x = x;
@@ -181,9 +201,7 @@ void initChunk(chunk& chunk, int x, int y) {
     for (int i = 0; i < CHUNKWIDTH; ++i) {
         for (int k = 0; k < CHUNKWIDTH; ++k) {
             for (int j = 0; j < CHUNKHEIGHT; ++j) {
-                double h = db::perlin((double)(i + key.x * CHUNKWIDTH) / 86.0, (double)(k + key.y * CHUNKWIDTH) / 86.0, (double)(j) / 86.0);
-                h += db::perlin((double)(i + key.x * CHUNKWIDTH) / 8.0, (double)(k + key.y * CHUNKWIDTH) / 8.0) * 0.08;
-                if ((h + 1.0)*0.5 > (double)j / CHUNKHEIGHT) {
+                if (blockDensity(i + key.x * CHUNKWIDTH,j, k + key.y * CHUNKWIDTH,1) < 0.0) {
                     chunk.blocks[i][j][k] = stone;
                 }
                 else {
@@ -747,7 +765,7 @@ void processClick() {
                     }
                 }
                 if (localZ == CHUNKWIDTH - 1) {
-                    ChunkKey southKey = { chunk.key.x + 1, chunk.key.y + 1};
+                    ChunkKey southKey = { chunk.key.x, chunk.key.y + 1};
                     auto southIt = chunks.find(southKey);
                     if (southIt != chunks.end()) {
                         if (southIt->second.isActive) {
@@ -901,11 +919,11 @@ void processKey() {
             camera.Position.z += dPos.z;
         }
 
-        const float accY = -0.0008;
-        const float maxYspeed = 0.07;
-        const float jumpHeight = 0.052;
-        camera.Yspeed = camera.Yspeed < -maxYspeed ? -maxYspeed : camera.Yspeed + accY;
-        float posY = camera.Position.y + camera.Yspeed;
+        const float accY = -27;
+        const float maxYspeed = 25;
+        const float jumpHeight = 8;
+        camera.Yspeed = camera.Yspeed < -maxYspeed ? -maxYspeed : camera.Yspeed + accY*deltaTime;
+        float posY = camera.Position.y + camera.Yspeed * deltaTime;
         bool isOnGround = false;
 
         int chunkX = static_cast<int>(floor((float)(camera.Position.x) / CHUNKWIDTH));
@@ -961,7 +979,7 @@ int main() {
 
     loadChunksAround();
 
-    camera.Position = glm::vec3(1.0, 71.8, 1.0);
+    camera.Position = glm::vec3(1.0, CHUNKHEIGHT-2, 1.0);
 
     Light* sun = createLight(DIRECTIONAL, true);
     setLightColor(sun, glm::vec3(1.0, 1.0, 1.0));
@@ -973,6 +991,8 @@ int main() {
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
+        //setLightDirection(sun, glm::vec3(-3.0f + glm::cos(glfwGetTime())*2.0, 3.8f + glm::sin(glfwGetTime()) * 2.0, -5.0f));
+        setLightDirection(sun, glm::vec3(-3.0f, 3.8f, -5.0f));
 
         loadChunksAround();
         unloadDistantChunks();

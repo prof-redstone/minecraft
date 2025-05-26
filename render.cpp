@@ -75,6 +75,8 @@ void SetupRender(const char * nom, Camera* cam) {
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glPolygonOffset(1.0, 1.0);
     camera = *cam;
 }
 
@@ -329,11 +331,11 @@ Light* createLight(
         light->fov = glm::radians(90.0f);
     }
     else {
-        light->near_plane = -50.0;
+        light->near_plane = -80.0;
         light->far_plane = 50.0;
         light->shadowWidth = 2048;
         light->shadowHeight = 2048;
-        light->PCFSize = 1;
+        light->PCFSize = 2;
         light->width = 25.0;
     }
 
@@ -424,7 +426,7 @@ void renderScene() {
     //calculating shadow
     int parityFrameShadowRender = 1; //min 1, max =~ 2
     glUseProgram(shaderProgramDepth);
-    //glCullFace(GL_FRONT);
+    glCullFace(GL_FRONT);
     for (int i = 0; i < lightList.size(); i++) {
         if (lightList[i]->castshadow && (frameCounter % parityFrameShadowRender == 0)) {
             glUniformMatrix4fv(glGetUniformLocation(shaderProgramDepth, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(getLightSpaceMatrix(lightList[i])));
@@ -445,7 +447,7 @@ void renderScene() {
         }
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    //glCullFace(GL_BACK);
+    glCullFace(GL_BACK);
 
 
 
@@ -557,16 +559,15 @@ void renderScene() {
     glUniformMatrix4fv(glGetUniformLocation(shaderLight, "model"), 1, GL_FALSE, glm::value_ptr(glm::scale(glm::mat4(glm::translate(glm::mat4(1.0f), blockTargetPos + glm::vec3(0.5, 0.5, 0.5))), glm::vec3(0.505f))));
     glUniformMatrix4fv(glGetUniformLocation(shaderLight, "view"), 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(glGetUniformLocation(shaderLight, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-    glUniform4fv(glGetUniformLocation(shaderLight, "color"), 1, glm::value_ptr(glm::vec4(1.0,1.0,1.0, 0.18f)));
+    glUniform4fv(glGetUniformLocation(shaderLight, "color"), 1, glm::value_ptr(glm::vec4(1.0,1.0,1.0, 0.10f)));
     glBindVertexArray(VAO_LIGHT);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
 
     glm::vec3 boxPos = camera.Position + camera.Front * glm::float32(0.1);
 
-    // Version alternative avec lookAt (plus simple)
     glm::mat4 billboardMatrix = glm::inverse(glm::lookAt(boxPos, camera.Position, camera.Up));
-    glm::mat4 modelMatrix = billboardMatrix * glm::scale(glm::mat4(1.0f), glm::vec3(0.0005f));
+    glm::mat4 modelMatrix = billboardMatrix * glm::scale(glm::mat4(1.0f), glm::vec3(0.0007f));
 
 
     glUniformMatrix4fv(glGetUniformLocation(shaderLight, "model"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
