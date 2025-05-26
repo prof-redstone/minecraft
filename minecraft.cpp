@@ -11,7 +11,7 @@
 #include "render.hpp"
 
 #define CHUNKWIDTH 20
-#define CHUNKHEIGHT 100
+#define CHUNKHEIGHT 120
 #define RENDER_DISTANCE 10
 
 #define air -1
@@ -23,6 +23,7 @@
 #define grass 3
 #define diamond 4
 #define log 5
+#define water -4
 
 
 int maxChunksPerFrame = 20;
@@ -41,6 +42,8 @@ float lastFrame = 0.0f;
 
 bool flyMode = false;
 float playerHeight = 1.8;
+int waterHeight = 25;
+int seed = 2;
 
 
 void addTopFace(vector<float>& mesh, float x, float y, float z, float ou, float ov, float s) {
@@ -119,6 +122,7 @@ vector<float> getFaceUV(int block, int face) {
     else if (block == diamond) { textureCo = std::vector<int>{ 6, 6, 6, 6, 6, 6 }[face]; }
     else if (block == glass) { textureCo = std::vector<int>{ 2, 2, 2, 2, 2, 2 }[face]; }
     else if (block == log) { textureCo = std::vector<int>{ 8, 8, 9, 9, 8, 8 }[face]; }
+    else if (block == water) { textureCo = std::vector<int>{ 13, 13, 13, 12, 13, 13 }[face]; }
 
 
     vector<float> rez = { (float)(textureCo % textureMapWidth)/textureMapWidth,(float)(textureCo / textureMapWidth) / textureMapWidth,1.0f / textureMapWidth };
@@ -170,25 +174,22 @@ bool inChunk(int i, int j, int k) {
     return 0 <= i && i < CHUNKWIDTH && 0 <= j && j < CHUNKHEIGHT && 0 <= k && k < CHUNKWIDTH;
 }
 
-
 double blockDensity(int i, int j, int k, int seed) {
-    // mountainous, height, islandish.
-    double height = (double)(j*2) / CHUNKHEIGHT - 1.0; //hauteur j entre -1 et 1
-    double island = (db::perlin((double)i / 500.0, (double)k / 500.0, 100.0 * seed) -0.4) * 10.0;
+    double height = (double)(j * 2) / CHUNKHEIGHT - 1.0; //hauteur j entre -1 et 1
+    double island = (db::perlin((double)i / 500.0, (double)k / 500.0, 100.0 * seed) - 0.2) * 2.0;
     if (island < -1.0) island = -1.0;
     if (island > 1.0) island = 1.0;
-
-    double mountainous = db::perlin((double)i / 500.0, (double)k / 500.0, -100.0 * seed) * 1.5;
-	if (mountainous < -1.0) mountainous = -1.0;
-	if (mountainous > 1.0) mountainous = 1.0;
-
-
-	if (height < 0.0) {
-        height = -height * island;
-	}
+    double fact1 = 0.0;
+	double fact2 = 1.0;
+	if (island > 0.0) {
+        fact1 = island;
+    }
+    else {
+		fact2 = 1.0 -island*2.0;
+    }
     double h = db::perlin((double)i / 86.0, (double)k / 86.0, (double)j / 86.0 + 100 * seed);
     h += db::perlin((double)i / 8.0, (double)k / 8.0) * 0.08;
-    return h * (mountainous + 1.0) + height;
+    return h + height*fact2 + (glm::sin(-height * 3.0 + 0.2) + 0.3) * fact1;
 }
 
 void initChunk(chunk& chunk, int x, int y) {
@@ -201,11 +202,16 @@ void initChunk(chunk& chunk, int x, int y) {
     for (int i = 0; i < CHUNKWIDTH; ++i) {
         for (int k = 0; k < CHUNKWIDTH; ++k) {
             for (int j = 0; j < CHUNKHEIGHT; ++j) {
-                if (blockDensity(i + key.x * CHUNKWIDTH,j, k + key.y * CHUNKWIDTH,1) < 0.0) {
+                if (blockDensity(i + key.x * CHUNKWIDTH,j, k + key.y * CHUNKWIDTH, seed) < 0.0) {
                     chunk.blocks[i][j][k] = stone;
                 }
                 else {
-                    chunk.blocks[i][j][k] = air;
+                    if (j > waterHeight) {
+                        chunk.blocks[i][j][k] = air;
+                    }
+                    else {
+                        chunk.blocks[i][j][k] = water;
+                    }
                 }
             }
         }
@@ -214,9 +220,9 @@ void initChunk(chunk& chunk, int x, int y) {
         for (int k = 0; k < CHUNKWIDTH; ++k) {
 
             for (int j = 0; j < CHUNKHEIGHT-2; ++j) {
-                if (chunk.blocks[i][j][k] != air && chunk.blocks[i][j + 1][k] == air) {
+                if (chunk.blocks[i][j][k] == stone && chunk.blocks[i][j + 1][k] == air) {
                     chunk.blocks[i][j][k] = grass;
-                }else if(chunk.blocks[i][j][k] != air && chunk.blocks[i][j + 2][k] == air) {
+                }else if(chunk.blocks[i][j][k] == stone && chunk.blocks[i][j + 2][k] == air) {
                     chunk.blocks[i][j][k] = dirt;
                 }
             }
@@ -229,10 +235,8 @@ void initChunk(chunk& chunk, int x, int y) {
         for (int k = -3; k < CHUNKWIDTH+3; ++k) {
             if (hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, 0) % 100 < 1) {
                 int h = 0;
-                for (int j = CHUNKHEIGHT - 2; j > 0; --j) {
-                    double t = db::perlin((double)(i + key.x * CHUNKWIDTH) / 86.0, (double)(k + key.y * CHUNKWIDTH) / 86.0, (double)(j) / 86.0);
-                    t += db::perlin((double)(i + key.x * CHUNKWIDTH) / 8.0, (double)(k + key.y * CHUNKWIDTH) / 8.0) * 0.08;
-                    if ((t + 1.0) * 0.5 > (double)j / CHUNKHEIGHT) {
+                for (int j = CHUNKHEIGHT - 2; j > waterHeight; --j) {
+                    if (blockDensity(i + key.x * CHUNKWIDTH, j, k + key.y * CHUNKWIDTH, seed) < 0.0) {
                         h = j;
                         break;
                     }
