@@ -17,7 +17,7 @@ enum Camera_Movement {
 // Default camera values
 const float YAW = -90.0f;
 const float PITCH = 0.0f;
-const float SPEED = 6.0f;
+const float SPEED = 60.0f;
 const float SENSITIVITY = 0.05f;
 const float ZOOM = 90.0f;
 
@@ -59,6 +59,10 @@ public:
     bool downPressed = false;
     bool forwardPressed = false;
     bool backwardPressed = false;
+
+	bool tabPressed = false;
+    bool flyPressed = false;
+	bool walkPressed = false;
 
     bool spacePressed = false;
 

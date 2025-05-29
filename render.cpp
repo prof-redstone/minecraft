@@ -12,12 +12,19 @@
 #include "render.hpp"
 
 std::vector<std::string> SkyBoxFaces{
-    "sources/skybox/right.jpg",
+    /*"sources/skybox/right.jpg",
     "sources/skybox/left.jpg",
     "sources/skybox/top.jpg",
     "sources/skybox/bottom.jpg",
     "sources/skybox/front.jpg",
-    "sources/skybox/back.jpg"
+    "sources/skybox/back.jpg"*/
+
+    "sources/skybox/px.jpg",
+    "sources/skybox/nx.jpg",
+    "sources/skybox/py.jpg",
+    "sources/skybox/ny.jpg",
+    "sources/skybox/pz.jpg",
+    "sources/skybox/nz.jpg"
 };
 
 const char* shaderPathSkyBoxVert = "sources/shaders/SkyboxVertex.glsl";
@@ -336,7 +343,7 @@ Light* createLight(
         light->shadowWidth = 2048;
         light->shadowHeight = 2048;
         light->PCFSize = 2;
-        light->width = 25.0;
+        light->width = 30.0;
     }
 
     if (light->castshadow) {
@@ -860,6 +867,10 @@ void processInput(GLFWwindow* window){
     camera.key7Pressed = (glfwGetKey(window, GLFW_KEY_7) == GLFW_PRESS);
     camera.key8Pressed = (glfwGetKey(window, GLFW_KEY_8) == GLFW_PRESS);
     camera.key9Pressed = (glfwGetKey(window, GLFW_KEY_9) == GLFW_PRESS);
+
+    camera.tabPressed = (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS);
+    camera.flyPressed = (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS);
+    camera.walkPressed = (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS);
 }
 
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn){

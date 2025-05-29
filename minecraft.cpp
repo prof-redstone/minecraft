@@ -24,9 +24,10 @@
 #define diamond 4
 #define log 5
 #define water -4
+#define sand 6
 
 
-int maxChunksPerFrame = 20;
+int maxChunksPerFrame = 5;
 using namespace std;
 
 int textureMapWidth = 4;
@@ -40,7 +41,7 @@ signed char currentBlock = stone;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-bool flyMode = false;
+bool flyMode = true;
 float playerHeight = 1.8;
 int waterHeight = 25;
 int seed = 2;
@@ -117,11 +118,12 @@ vector<float> getFaceUV(int block, int face) {
     if(block == stone){ textureCo = std::vector<int>{ 0, 0, 0, 0, 0, 0 }[face];}
     else if (block == planks) { textureCo = std::vector<int>{ 1, 1, 1, 1, 1, 1 }[face]; }
     else if (block == dirt) { textureCo = std::vector<int>{ 3, 3, 3, 3, 3, 3 }[face]; }
-    else if (block == grass) { textureCo = std::vector<int>{ 4, 4, 4, 5, 4, 4 }[face]; }
+    else if (block == grass) { textureCo = std::vector<int>{ 4, 4, 3, 5, 4, 4 }[face]; }
     else if (block == leaves) { textureCo = std::vector<int>{ 7, 7, 7, 7, 7, 7 }[face]; }
     else if (block == diamond) { textureCo = std::vector<int>{ 6, 6, 6, 6, 6, 6 }[face]; }
     else if (block == glass) { textureCo = std::vector<int>{ 2, 2, 2, 2, 2, 2 }[face]; }
     else if (block == log) { textureCo = std::vector<int>{ 8, 8, 9, 9, 8, 8 }[face]; }
+    else if (block == sand) { textureCo = std::vector<int>{ 10, 10, 10, 10, 10, 10 }[face]; }
     else if (block == water) { textureCo = std::vector<int>{ 13, 13, 13, 12, 13, 13 }[face]; }
 
 
@@ -192,6 +194,30 @@ double blockDensity(int i, int j, int k, int seed) {
     return h + height*fact2 + (glm::sin(-height * 3.0 + 0.2) + 0.3) * fact1;
 }
 
+bool asATree(int x, int y , int seed) {
+    double proba = db::perlin((double)x / 200.0, (double)y / 200.0, (double)(100 * seed))+1.0;
+    double density = 0.07;
+    if (proba < 0.7) density = 0.002;
+	else if (proba < 1.0) density = 0.005;
+	else if (proba < 1.3) density = 0.02;
+
+    return (hash2D(x, y, seed) % 1000) < (int)(density * 1000);
+}
+
+int biomeIndex(int x, int y, int seed) {
+    return 0;
+    double noise = db::perlin( (double)x / 500.0, (double)y / 500.0, 100.0 * seed)+1.0;
+    if (noise < 0.98) {
+        return 0;
+    }
+	if (0.98 <= noise && noise < 1.02) {
+		return 1;
+	}
+	if (noise < 2.0) {
+		return 2;
+	}
+}
+
 void initChunk(chunk& chunk, int x, int y) {
     ChunkKey key;
     key.x = x;
@@ -218,22 +244,36 @@ void initChunk(chunk& chunk, int x, int y) {
     }
     for (int i = 0; i < CHUNKWIDTH; ++i) {
         for (int k = 0; k < CHUNKWIDTH; ++k) {
-
-            for (int j = 0; j < CHUNKHEIGHT-2; ++j) {
-                if (chunk.blocks[i][j][k] == stone && chunk.blocks[i][j + 1][k] == air) {
-                    chunk.blocks[i][j][k] = grass;
-                }else if(chunk.blocks[i][j][k] == stone && chunk.blocks[i][j + 2][k] == air) {
-                    chunk.blocks[i][j][k] = dirt;
+			int biome = biomeIndex(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed);
+			if (biome == 0) { //plains
+                for (int j = 0; j < CHUNKHEIGHT - 2; ++j) {
+                    if (chunk.blocks[i][j][k] == stone && chunk.blocks[i][j + 1][k] == air) {
+                        chunk.blocks[i][j][k] = grass;
+                    }
+                    else if (chunk.blocks[i][j][k] == stone && chunk.blocks[i][j + 2][k] == air) {
+                        chunk.blocks[i][j][k] = dirt;
+                    }
                 }
             }
+            else if (biome == 2) {
+                //desert
+                for (int j = 0; j < CHUNKHEIGHT - 2; ++j) {
+                    if (chunk.blocks[i][j][k] == stone && chunk.blocks[i][j + 1][k] == air) {
+                        chunk.blocks[i][j][k] = sand;
+                    }
+                    else if (chunk.blocks[i][j][k] == stone && chunk.blocks[i][j + 2][k] == air) {
+                        chunk.blocks[i][j][k] = sand;
+                    }
+                }
 
+            }
         }
     }
 
     //tree
-    for (int i = -3; i < CHUNKWIDTH+3; ++i) {
-        for (int k = -3; k < CHUNKWIDTH+3; ++k) {
-            if (hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, 0) % 100 < 1) {
+    for (int i = -2; i < CHUNKWIDTH+2; ++i) {
+        for (int k = -2; k < CHUNKWIDTH+2; ++k) {
+            if (asATree(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed)) {
                 int h = 0;
                 for (int j = CHUNKHEIGHT - 2; j > waterHeight; --j) {
                     if (blockDensity(i + key.x * CHUNKWIDTH, j, k + key.y * CHUNKWIDTH, seed) < 0.0) {
@@ -241,46 +281,47 @@ void initChunk(chunk& chunk, int x, int y) {
                         break;
                     }
                 }
-                if (inChunk(i, h + 1, k)) chunk.blocks[i][h + 1][k] = log;
-                if (inChunk(i, h + 2, k)) chunk.blocks[i][h + 2][k] = log;
-                if (inChunk(i, h + 3, k)) chunk.blocks[i][h + 3][k] = log;
-                if (inChunk(i, h + 4, k)) chunk.blocks[i][h + 4][k] = log;
+                if (h != 0) {
+                    if (inChunk(i, h + 1, k)) chunk.blocks[i][h + 1][k] = log;
+                    if (inChunk(i, h + 2, k)) chunk.blocks[i][h + 2][k] = log;
+                    if (inChunk(i, h + 3, k)) chunk.blocks[i][h + 3][k] = log;
+                    if (inChunk(i, h + 4, k)) chunk.blocks[i][h + 4][k] = log;
 
-                if (inChunk(i + 1, h + 3, k + 0)) chunk.blocks[i + 1][h + 3][k + 0] = leaves;
-                if (inChunk(i + 2, h + 3, k + 0)) chunk.blocks[i + 2][h + 3][k + 0] = leaves;
-                if (inChunk(i + 1, h + 3, k + 1)) chunk.blocks[i + 1][h + 3][k + 1] = leaves;
-                if (inChunk(i + 1, h + 3, k - 1)) chunk.blocks[i + 1][h + 3][k - 1] = leaves;
-                if (inChunk(i + 0, h + 3, k + 1)) chunk.blocks[i + 0][h + 3][k + 1] = leaves;
-                if (inChunk(i + 0, h + 3, k - 1)) chunk.blocks[i + 0][h + 3][k - 1] = leaves;
-                if (inChunk(i + 0, h + 3, k + 2)) chunk.blocks[i + 0][h + 3][k + 2] = leaves;
-                if (inChunk(i + 0, h + 3, k - 2)) chunk.blocks[i + 0][h + 3][k - 2] = leaves;
-                if (inChunk(i - 1, h + 3, k + 1)) chunk.blocks[i - 1][h + 3][k + 1] = leaves;
-                if (inChunk(i - 1, h + 3, k + 0)) chunk.blocks[i - 1][h + 3][k + 0] = leaves;
-                if (inChunk(i - 2, h + 3, k + 0)) chunk.blocks[i - 2][h + 3][k + 0] = leaves;
-                if (inChunk(i - 1, h + 3, k - 1)) chunk.blocks[i - 1][h + 3][k - 1] = leaves;
+                    if (inChunk(i + 1, h + 3, k + 0)) chunk.blocks[i + 1][h + 3][k + 0] = leaves;
+                    if (inChunk(i + 2, h + 3, k + 0)) chunk.blocks[i + 2][h + 3][k + 0] = leaves;
+                    if (inChunk(i + 1, h + 3, k + 1)) chunk.blocks[i + 1][h + 3][k + 1] = leaves;
+                    if (inChunk(i + 1, h + 3, k - 1)) chunk.blocks[i + 1][h + 3][k - 1] = leaves;
+                    if (inChunk(i + 0, h + 3, k + 1)) chunk.blocks[i + 0][h + 3][k + 1] = leaves;
+                    if (inChunk(i + 0, h + 3, k - 1)) chunk.blocks[i + 0][h + 3][k - 1] = leaves;
+                    if (inChunk(i + 0, h + 3, k + 2)) chunk.blocks[i + 0][h + 3][k + 2] = leaves;
+                    if (inChunk(i + 0, h + 3, k - 2)) chunk.blocks[i + 0][h + 3][k - 2] = leaves;
+                    if (inChunk(i - 1, h + 3, k + 1)) chunk.blocks[i - 1][h + 3][k + 1] = leaves;
+                    if (inChunk(i - 1, h + 3, k + 0)) chunk.blocks[i - 1][h + 3][k + 0] = leaves;
+                    if (inChunk(i - 2, h + 3, k + 0)) chunk.blocks[i - 2][h + 3][k + 0] = leaves;
+                    if (inChunk(i - 1, h + 3, k - 1)) chunk.blocks[i - 1][h + 3][k - 1] = leaves;
 
-                if (inChunk(i + 1, h + 4, k + 0)) chunk.blocks[i + 1][h + 4][k + 0] = leaves;
-                if (inChunk(i + 2, h + 4, k + 0)) chunk.blocks[i + 2][h + 4][k + 0] = leaves;
-                if (inChunk(i + 1, h + 4, k + 1)) chunk.blocks[i + 1][h + 4][k + 1] = leaves;
-                if (inChunk(i + 1, h + 4, k - 1)) chunk.blocks[i + 1][h + 4][k - 1] = leaves;
-                if (inChunk(i + 0, h + 4, k + 1)) chunk.blocks[i + 0][h + 4][k + 1] = leaves;
-                if (inChunk(i + 0, h + 4, k - 1)) chunk.blocks[i + 0][h + 4][k - 1] = leaves;
-                if (inChunk(i + 0, h + 4, k + 2)) chunk.blocks[i + 0][h + 4][k + 2] = leaves;
-                if (inChunk(i + 0, h + 4, k - 2)) chunk.blocks[i + 0][h + 4][k - 2] = leaves;
-                if (inChunk(i - 1, h + 4, k + 1)) chunk.blocks[i - 1][h + 4][k + 1] = leaves;
-                if (inChunk(i - 1, h + 4, k + 0)) chunk.blocks[i - 1][h + 4][k + 0] = leaves;
-                if (inChunk(i - 2, h + 4, k + 0)) chunk.blocks[i - 2][h + 4][k + 0] = leaves;
-                if (inChunk(i - 1, h + 4, k - 1)) chunk.blocks[i - 1][h + 4][k - 1] = leaves;
+                    if (inChunk(i + 1, h + 4, k + 0)) chunk.blocks[i + 1][h + 4][k + 0] = leaves;
+                    if (inChunk(i + 2, h + 4, k + 0)) chunk.blocks[i + 2][h + 4][k + 0] = leaves;
+                    if (inChunk(i + 1, h + 4, k + 1)) chunk.blocks[i + 1][h + 4][k + 1] = leaves;
+                    if (inChunk(i + 1, h + 4, k - 1)) chunk.blocks[i + 1][h + 4][k - 1] = leaves;
+                    if (inChunk(i + 0, h + 4, k + 1)) chunk.blocks[i + 0][h + 4][k + 1] = leaves;
+                    if (inChunk(i + 0, h + 4, k - 1)) chunk.blocks[i + 0][h + 4][k - 1] = leaves;
+                    if (inChunk(i + 0, h + 4, k + 2)) chunk.blocks[i + 0][h + 4][k + 2] = leaves;
+                    if (inChunk(i + 0, h + 4, k - 2)) chunk.blocks[i + 0][h + 4][k - 2] = leaves;
+                    if (inChunk(i - 1, h + 4, k + 1)) chunk.blocks[i - 1][h + 4][k + 1] = leaves;
+                    if (inChunk(i - 1, h + 4, k + 0)) chunk.blocks[i - 1][h + 4][k + 0] = leaves;
+                    if (inChunk(i - 2, h + 4, k + 0)) chunk.blocks[i - 2][h + 4][k + 0] = leaves;
+                    if (inChunk(i - 1, h + 4, k - 1)) chunk.blocks[i - 1][h + 4][k - 1] = leaves;
 
-                if (inChunk(i + 0, h + 5, k + 0)) chunk.blocks[i + 0][h + 5][k + 0] = leaves;
-                if (inChunk(i + 1, h + 5, k + 0)) chunk.blocks[i + 1][h + 5][k + 0] = leaves;
-                if (inChunk(i - 1, h + 5, k + 0)) chunk.blocks[i - 1][h + 5][k + 0] = leaves;
-                if (inChunk(i + 0, h + 5, k + 1)) chunk.blocks[i + 0][h + 5][k + 1] = leaves;
-                if (inChunk(i + 0, h + 5, k - 1)) chunk.blocks[i + 0][h + 5][k - 1] = leaves;
+                    if (inChunk(i + 0, h + 5, k + 0)) chunk.blocks[i + 0][h + 5][k + 0] = leaves;
+                    if (inChunk(i + 1, h + 5, k + 0)) chunk.blocks[i + 1][h + 5][k + 0] = leaves;
+                    if (inChunk(i - 1, h + 5, k + 0)) chunk.blocks[i - 1][h + 5][k + 0] = leaves;
+                    if (inChunk(i + 0, h + 5, k + 1)) chunk.blocks[i + 0][h + 5][k + 1] = leaves;
+                    if (inChunk(i + 0, h + 5, k - 1)) chunk.blocks[i + 0][h + 5][k - 1] = leaves;
 
-                if (inChunk(i + 0, h + 6, k + 0)) chunk.blocks[i + 0][h + 6][k + 0] = leaves;
+                    if (inChunk(i + 0, h + 6, k + 0)) chunk.blocks[i + 0][h + 6][k + 0] = leaves;
+                }
             }
-        
         }
     }
 }
@@ -820,6 +861,15 @@ void processKey() {
     if (camera.key7Pressed) currentBlock = diamond;
     if (camera.key8Pressed) currentBlock = leaves;
 
+    if (camera.flyPressed) { 
+		camera.MovementSpeed = 200.0f;
+        flyMode = true; 
+    }
+    if (camera.walkPressed) {
+        camera.MovementSpeed = 7.0f;
+        flyMode = false;
+    }
+
     if (flyMode) {
         if (camera.forwardPressed == GLFW_PRESS)
             camera.ProcessKeyboard(FORWARD, deltaTime);
@@ -983,12 +1033,12 @@ int main() {
 
     loadChunksAround();
 
-    camera.Position = glm::vec3(1.0, CHUNKHEIGHT-2, 1.0);
+    camera.Position = glm::vec3(1.0, CHUNKHEIGHT-2 -20, 1.0);
 
     Light* sun = createLight(DIRECTIONAL, true);
     setLightColor(sun, glm::vec3(1.0, 1.0, 1.0));
     setLightIntensity(sun, 0.6);
-    setLightDirection(sun, glm::vec3(-3.0f, 3.8f, -5.0f));
+    setLightDirection(sun, glm::vec3(-3.8f, 7.5f, -5.0f));
 
     while (shouldCloseTheApp()) {
         float currentFrame = static_cast<float>(glfwGetTime());
@@ -996,7 +1046,7 @@ int main() {
         lastFrame = currentFrame;
 
         //setLightDirection(sun, glm::vec3(-3.0f + glm::cos(glfwGetTime())*2.0, 3.8f + glm::sin(glfwGetTime()) * 2.0, -5.0f));
-        setLightDirection(sun, glm::vec3(-3.0f, 3.8f, -5.0f));
+        
 
         loadChunksAround();
         unloadDistantChunks();
