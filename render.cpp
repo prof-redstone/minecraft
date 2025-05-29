@@ -116,7 +116,7 @@ void terminateRender() {
 
 
 void setMeshTextureFile(Mesh* mesh, const char* path) {
-    const int pixelArtMaxSize = 64;
+    const int pixelArtMaxSize = 254;
     glGenTextures(1, &(mesh->texture));
     glBindTexture(GL_TEXTURE_2D, (mesh->texture));
 
