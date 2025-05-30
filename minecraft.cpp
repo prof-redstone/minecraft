@@ -7,28 +7,15 @@
 #include <cstdint>
 #define DB_PERLIN_IMPL
 #include "db_perlin.hpp"
+#include "blocks.h"
 #include "camera.h"
 #include "render.hpp"
+#include "structure.h"
 
 #define CHUNKWIDTH 20
 #define CHUNKHEIGHT 120
 #define RENDER_DISTANCE 10
 
-#define air -1
-#define oak_leaves -2
-#define glass -3
-#define stone 0
-#define oak_planks 1
-#define dirt 2
-#define grass 3
-#define diamond 4
-#define oak_log 5
-#define water -4
-#define sand 6
-#define snowy_grass 7
-#define cactus 8
-#define spruce_log 9
-#define spruce_leaves -5
 
 int maxChunksPerFrame = 3;
 using namespace std;
@@ -225,6 +212,20 @@ int biomeTemperature(int x, int y, int seed) {
 	}
 }
 
+void placeBlockStructure(vector<vector<vector<signed char>>>& chunk, std::vector<std::tuple<int, int, int, int, int>> structure, int lx, int ly, int lz) {
+    for (const auto& block : structure) {
+        int x = std::get<0>(block);
+        int y = std::get<1>(block);
+        int z = std::get<2>(block);
+        signed char blockType = std::get<3>(block);
+        bool replaceExisting = std::get<4>(block);
+        if (inChunk(x +lx, y+ly, z+lz)) {
+            if (replaceExisting || chunk[x+lx][y+ly][z+lz] == air) {
+                chunk[x+lx][y+ly][z+lz] = blockType;
+            }
+        }
+    }
+}
 
 void initChunk(chunk& chunk, int x, int y) {
     ChunkKey key;
@@ -298,85 +299,20 @@ void initChunk(chunk& chunk, int x, int y) {
                     }
                 }
                 if (h != 0 && biomeTemperature(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) == 0) {
-                    if (inChunk(i, h + 1, k)) chunk.blocks[i][h + 1][k] = oak_log;
-                    if (inChunk(i, h + 2, k)) chunk.blocks[i][h + 2][k] = oak_log;
-                    if (inChunk(i, h + 3, k)) chunk.blocks[i][h + 3][k] = oak_log;
-                    if (inChunk(i, h + 4, k)) chunk.blocks[i][h + 4][k] = oak_log;
-
-                    if (inChunk(i + 1, h + 3, k + 0) && chunk.blocks[i + 1][h + 3][k + 0] == air) chunk.blocks[i + 1][h + 3][k + 0] = oak_leaves;
-                    if (inChunk(i + 2, h + 3, k + 0) && chunk.blocks[i + 2][h + 3][k + 0] == air) chunk.blocks[i + 2][h + 3][k + 0] = oak_leaves;
-                    if (inChunk(i + 1, h + 3, k + 1) && chunk.blocks[i + 1][h + 3][k + 1] == air) chunk.blocks[i + 1][h + 3][k + 1] = oak_leaves;
-                    if (inChunk(i + 1, h + 3, k - 1) && chunk.blocks[i + 1][h + 3][k - 1] == air) chunk.blocks[i + 1][h + 3][k - 1] = oak_leaves;
-                    if (inChunk(i + 0, h + 3, k + 1) && chunk.blocks[i + 0][h + 3][k + 1] == air) chunk.blocks[i + 0][h + 3][k + 1] = oak_leaves;
-                    if (inChunk(i + 0, h + 3, k - 1) && chunk.blocks[i + 0][h + 3][k - 1] == air) chunk.blocks[i + 0][h + 3][k - 1] = oak_leaves;
-                    if (inChunk(i + 0, h + 3, k + 2) && chunk.blocks[i + 0][h + 3][k + 2] == air) chunk.blocks[i + 0][h + 3][k + 2] = oak_leaves;
-                    if (inChunk(i + 0, h + 3, k - 2) && chunk.blocks[i + 0][h + 3][k - 2] == air) chunk.blocks[i + 0][h + 3][k - 2] = oak_leaves;
-                    if (inChunk(i - 1, h + 3, k + 1) && chunk.blocks[i - 1][h + 3][k + 1] == air) chunk.blocks[i - 1][h + 3][k + 1] = oak_leaves;
-                    if (inChunk(i - 1, h + 3, k + 0) && chunk.blocks[i - 1][h + 3][k + 0] == air) chunk.blocks[i - 1][h + 3][k + 0] = oak_leaves;
-                    if (inChunk(i - 2, h + 3, k + 0) && chunk.blocks[i - 2][h + 3][k + 0] == air) chunk.blocks[i - 2][h + 3][k + 0] = oak_leaves;
-                    if (inChunk(i - 1, h + 3, k - 1) && chunk.blocks[i - 1][h + 3][k - 1] == air) chunk.blocks[i - 1][h + 3][k - 1] = oak_leaves;
-                    if (inChunk(i + 1, h + 4, k + 0) && chunk.blocks[i + 1][h + 4][k + 0] == air) chunk.blocks[i + 1][h + 4][k + 0] = oak_leaves;
-                    if (inChunk(i + 2, h + 4, k + 0) && chunk.blocks[i + 2][h + 4][k + 0] == air) chunk.blocks[i + 2][h + 4][k + 0] = oak_leaves;
-                    if (inChunk(i + 1, h + 4, k + 1) && chunk.blocks[i + 1][h + 4][k + 1] == air) chunk.blocks[i + 1][h + 4][k + 1] = oak_leaves;
-                    if (inChunk(i + 1, h + 4, k - 1) && chunk.blocks[i + 1][h + 4][k - 1] == air) chunk.blocks[i + 1][h + 4][k - 1] = oak_leaves;
-                    if (inChunk(i + 0, h + 4, k + 1) && chunk.blocks[i + 0][h + 4][k + 1] == air) chunk.blocks[i + 0][h + 4][k + 1] = oak_leaves;
-                    if (inChunk(i + 0, h + 4, k - 1) && chunk.blocks[i + 0][h + 4][k - 1] == air) chunk.blocks[i + 0][h + 4][k - 1] = oak_leaves;
-                    if (inChunk(i + 0, h + 4, k + 2) && chunk.blocks[i + 0][h + 4][k + 2] == air) chunk.blocks[i + 0][h + 4][k + 2] = oak_leaves;
-                    if (inChunk(i + 0, h + 4, k - 2) && chunk.blocks[i + 0][h + 4][k - 2] == air) chunk.blocks[i + 0][h + 4][k - 2] = oak_leaves;
-                    if (inChunk(i - 1, h + 4, k + 1) && chunk.blocks[i - 1][h + 4][k + 1] == air) chunk.blocks[i - 1][h + 4][k + 1] = oak_leaves;
-                    if (inChunk(i - 1, h + 4, k + 0) && chunk.blocks[i - 1][h + 4][k + 0] == air) chunk.blocks[i - 1][h + 4][k + 0] = oak_leaves;
-                    if (inChunk(i - 2, h + 4, k + 0) && chunk.blocks[i - 2][h + 4][k + 0] == air) chunk.blocks[i - 2][h + 4][k + 0] = oak_leaves;
-                    if (inChunk(i - 1, h + 4, k - 1) && chunk.blocks[i - 1][h + 4][k - 1] == air) chunk.blocks[i - 1][h + 4][k - 1] = oak_leaves;
-                    if (inChunk(i + 0, h + 5, k + 0) && chunk.blocks[i + 0][h + 5][k + 0] == air) chunk.blocks[i + 0][h + 5][k + 0] = oak_leaves;
-                    if (inChunk(i + 1, h + 5, k + 0) && chunk.blocks[i + 1][h + 5][k + 0] == air) chunk.blocks[i + 1][h + 5][k + 0] = oak_leaves;
-                    if (inChunk(i - 1, h + 5, k + 0) && chunk.blocks[i - 1][h + 5][k + 0] == air) chunk.blocks[i - 1][h + 5][k + 0] = oak_leaves;
-                    if (inChunk(i + 0, h + 5, k + 1) && chunk.blocks[i + 0][h + 5][k + 1] == air) chunk.blocks[i + 0][h + 5][k + 1] = oak_leaves;
-                    if (inChunk(i + 0, h + 5, k - 1) && chunk.blocks[i + 0][h + 5][k - 1] == air) chunk.blocks[i + 0][h + 5][k - 1] = oak_leaves;
-                    if (inChunk(i + 0, h + 6, k + 0) && chunk.blocks[i + 0][h + 6][k + 0] == air) chunk.blocks[i + 0][h + 6][k + 0] = oak_leaves;
+					placeBlockStructure(chunk.blocks, oak_tree_1, i,h,k);
                 }
                 if (h != 0 && biomeTemperature(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) == 1) {
-                    if (inChunk(i, h + 1, k)) chunk.blocks[i][h + 1][k] = spruce_log;
-                    if (inChunk(i, h + 2, k)) chunk.blocks[i][h + 2][k] = spruce_log;
-                    if (inChunk(i, h + 3, k)) chunk.blocks[i][h + 3][k] = spruce_log;
-                    if (inChunk(i, h + 4, k)) chunk.blocks[i][h + 4][k] = spruce_log;
-
-                    if (inChunk(i + 1, h + 3, k + 0) && chunk.blocks[i + 1][h + 3][k + 0] == air) chunk.blocks[i + 1][h + 3][k + 0] = spruce_leaves;
-                    if (inChunk(i + 2, h + 3, k + 0) && chunk.blocks[i + 2][h + 3][k + 0] == air) chunk.blocks[i + 2][h + 3][k + 0] = spruce_leaves;
-                    if (inChunk(i + 1, h + 3, k + 1) && chunk.blocks[i + 1][h + 3][k + 1] == air) chunk.blocks[i + 1][h + 3][k + 1] = spruce_leaves;
-                    if (inChunk(i + 1, h + 3, k - 1) && chunk.blocks[i + 1][h + 3][k - 1] == air) chunk.blocks[i + 1][h + 3][k - 1] = spruce_leaves;
-                    if (inChunk(i + 0, h + 3, k + 1) && chunk.blocks[i + 0][h + 3][k + 1] == air) chunk.blocks[i + 0][h + 3][k + 1] = spruce_leaves;
-                    if (inChunk(i + 0, h + 3, k - 1) && chunk.blocks[i + 0][h + 3][k - 1] == air) chunk.blocks[i + 0][h + 3][k - 1] = spruce_leaves;
-                    if (inChunk(i + 0, h + 3, k + 2) && chunk.blocks[i + 0][h + 3][k + 2] == air) chunk.blocks[i + 0][h + 3][k + 2] = spruce_leaves;
-                    if (inChunk(i + 0, h + 3, k - 2) && chunk.blocks[i + 0][h + 3][k - 2] == air) chunk.blocks[i + 0][h + 3][k - 2] = spruce_leaves;
-                    if (inChunk(i - 1, h + 3, k + 1) && chunk.blocks[i - 1][h + 3][k + 1] == air) chunk.blocks[i - 1][h + 3][k + 1] = spruce_leaves;
-                    if (inChunk(i - 1, h + 3, k + 0) && chunk.blocks[i - 1][h + 3][k + 0] == air) chunk.blocks[i - 1][h + 3][k + 0] = spruce_leaves;
-                    if (inChunk(i - 2, h + 3, k + 0) && chunk.blocks[i - 2][h + 3][k + 0] == air) chunk.blocks[i - 2][h + 3][k + 0] = spruce_leaves;
-                    if (inChunk(i - 1, h + 3, k - 1) && chunk.blocks[i - 1][h + 3][k - 1] == air) chunk.blocks[i - 1][h + 3][k - 1] = spruce_leaves;
-                    if (inChunk(i + 1, h + 4, k + 0) && chunk.blocks[i + 1][h + 4][k + 0] == air) chunk.blocks[i + 1][h + 4][k + 0] = spruce_leaves;
-                    if (inChunk(i + 2, h + 4, k + 0) && chunk.blocks[i + 2][h + 4][k + 0] == air) chunk.blocks[i + 2][h + 4][k + 0] = spruce_leaves;
-                    if (inChunk(i + 1, h + 4, k + 1) && chunk.blocks[i + 1][h + 4][k + 1] == air) chunk.blocks[i + 1][h + 4][k + 1] = spruce_leaves;
-                    if (inChunk(i + 1, h + 4, k - 1) && chunk.blocks[i + 1][h + 4][k - 1] == air) chunk.blocks[i + 1][h + 4][k - 1] = spruce_leaves;
-                    if (inChunk(i + 0, h + 4, k + 1) && chunk.blocks[i + 0][h + 4][k + 1] == air) chunk.blocks[i + 0][h + 4][k + 1] = spruce_leaves;
-                    if (inChunk(i + 0, h + 4, k - 1) && chunk.blocks[i + 0][h + 4][k - 1] == air) chunk.blocks[i + 0][h + 4][k - 1] = spruce_leaves;
-                    if (inChunk(i + 0, h + 4, k + 2) && chunk.blocks[i + 0][h + 4][k + 2] == air) chunk.blocks[i + 0][h + 4][k + 2] = spruce_leaves;
-                    if (inChunk(i + 0, h + 4, k - 2) && chunk.blocks[i + 0][h + 4][k - 2] == air) chunk.blocks[i + 0][h + 4][k - 2] = spruce_leaves;
-                    if (inChunk(i - 1, h + 4, k + 1) && chunk.blocks[i - 1][h + 4][k + 1] == air) chunk.blocks[i - 1][h + 4][k + 1] = spruce_leaves;
-                    if (inChunk(i - 1, h + 4, k + 0) && chunk.blocks[i - 1][h + 4][k + 0] == air) chunk.blocks[i - 1][h + 4][k + 0] = spruce_leaves;
-                    if (inChunk(i - 2, h + 4, k + 0) && chunk.blocks[i - 2][h + 4][k + 0] == air) chunk.blocks[i - 2][h + 4][k + 0] = spruce_leaves;
-                    if (inChunk(i - 1, h + 4, k - 1) && chunk.blocks[i - 1][h + 4][k - 1] == air) chunk.blocks[i - 1][h + 4][k - 1] = spruce_leaves;
-                    if (inChunk(i + 0, h + 5, k + 0) && chunk.blocks[i + 0][h + 5][k + 0] == air) chunk.blocks[i + 0][h + 5][k + 0] = spruce_leaves;
-                    if (inChunk(i + 1, h + 5, k + 0) && chunk.blocks[i + 1][h + 5][k + 0] == air) chunk.blocks[i + 1][h + 5][k + 0] = spruce_leaves;
-                    if (inChunk(i - 1, h + 5, k + 0) && chunk.blocks[i - 1][h + 5][k + 0] == air) chunk.blocks[i - 1][h + 5][k + 0] = spruce_leaves;
-                    if (inChunk(i + 0, h + 5, k + 1) && chunk.blocks[i + 0][h + 5][k + 1] == air) chunk.blocks[i + 0][h + 5][k + 1] = spruce_leaves;
-                    if (inChunk(i + 0, h + 5, k - 1) && chunk.blocks[i + 0][h + 5][k - 1] == air) chunk.blocks[i + 0][h + 5][k - 1] = spruce_leaves;
-                    if (inChunk(i + 0, h + 6, k + 0) && chunk.blocks[i + 0][h + 6][k + 0] == air) chunk.blocks[i + 0][h + 6][k + 0] = spruce_leaves;
+                    placeBlockStructure(chunk.blocks, spruce_tree_1, i, h, k);
                 }
                 if (h != 0 && biomeTemperature(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) == 2 && (i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH)%11 == 0) {
-                    if (inChunk(i, h + 1, k)) chunk.blocks[i][h + 1][k] = cactus;
-                    if (inChunk(i, h + 2, k)) chunk.blocks[i][h + 2][k] = cactus;
-                    if (inChunk(i, h + 3, k)) chunk.blocks[i][h + 3][k] = cactus;
                     if ((i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH) % 5 == 0) {
-                        if (inChunk(i, h + 4, k)) chunk.blocks[i][h + 4][k] = cactus;
+                        placeBlockStructure(chunk.blocks, cactus_2, i, h, k);
+                    }
+                    else if ((i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH) % 5 == 1) {
+                        placeBlockStructure(chunk.blocks, cactus_3, i, h, k);
+                    }
+                    else {
+						placeBlockStructure(chunk.blocks, cactus_1, i, h, k);
                     }
                 }
             }
@@ -541,7 +477,7 @@ void updateMesh(chunk& chunk) {
                         if (chunk.blocks[i][j][k] >= 0) {
                             addZPosFace(chunk.opaqueMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
                         }
-                        else {
+                        else if (!hasSouthChunk || southChunk->blocks[i][j][0] == air) {
                             addZPosFace(chunk.transpMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
                         }
                     }
@@ -924,7 +860,7 @@ void processKey() {
     if (camera.key8Pressed) currentBlock = oak_leaves;
 
     if (camera.flyPressed) { 
-		camera.MovementSpeed = 100.0f;
+		camera.MovementSpeed = 10.0f;
         flyMode = true; 
     }
     if (camera.walkPressed) {
@@ -1100,7 +1036,7 @@ int main() {
     setLightIntensity(sun, 0.6);
     setLightDirection(sun, glm::vec3(-3.8f, 7.5f, -5.0f));
 
-    Light* skyLight = createLight(DIRECTIONAL, true);
+    Light* skyLight = createLight(DIRECTIONAL, false);
     setLightColor(skyLight, glm::vec3(0.5, 0.8, 0.9));
     setLightIntensity(skyLight, 0.15);
     setLightDirection(skyLight, glm::vec3(0.0f, 1.0f, 0.0f));

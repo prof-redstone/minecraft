@@ -449,7 +449,7 @@ void renderScene() {
             for (int i = 0; i < transpMeshList.size(); i++) {
                 glUniformMatrix4fv(glGetUniformLocation(shaderProgramDepth, "model"), 1, GL_FALSE, glm::value_ptr(glm::translate((*transpMeshList[i]).model, -camera.Position)));
                 glBindVertexArray((*transpMeshList[i]).VAO);
-                glDrawArrays(GL_TRIANGLES, 0, (*transpMeshList[i]).vertices.size() / 3);
+                //glDrawArrays(GL_TRIANGLES, 0, (*transpMeshList[i]).vertices.size() / 3);
             }
         }
     }
@@ -525,7 +525,8 @@ void renderScene() {
         glBindVertexArray((*opaqueMeshList[i]).VAO);
         glDrawArrays(GL_TRIANGLES, 0, (*opaqueMeshList[i]).vertices.size() / 3);
     }
-    //glDepthMask(GL_FALSE); 
+
+
     for (int i = 0; i < transpMeshList.size(); i++) {
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(glm::translate((*transpMeshList[i]).model, -camera.Position)));
         glUniform4fv(glGetUniformLocation(shaderProgram, "mat.color"), 1, glm::value_ptr((*transpMeshList[i]).color));
@@ -540,10 +541,7 @@ void renderScene() {
         }
         glBindVertexArray((*transpMeshList[i]).VAO);
         glDrawArrays(GL_TRIANGLES, 0, (*transpMeshList[i]).vertices.size() / 3);
-    }
-    //glDepthMask(GL_TRUE);
-
-    
+    }    
 
 
     //---BOX LIGHT---
