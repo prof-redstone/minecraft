@@ -442,12 +442,12 @@ void renderScene() {
             glClear(GL_DEPTH_BUFFER_BIT);
 
             for (int i = 0; i < opaqueMeshList.size(); i++) {
-                glUniformMatrix4fv(glGetUniformLocation(shaderProgramDepth, "model"), 1, GL_FALSE, glm::value_ptr((*opaqueMeshList[i]).model));
+                glUniformMatrix4fv(glGetUniformLocation(shaderProgramDepth, "model"), 1, GL_FALSE, glm::value_ptr(glm::translate((*opaqueMeshList[i]).model, -camera.Position)));
                 glBindVertexArray((*opaqueMeshList[i]).VAO);
                 glDrawArrays(GL_TRIANGLES, 0, (*opaqueMeshList[i]).vertices.size() / 3);
             }
             for (int i = 0; i < transpMeshList.size(); i++) {
-                glUniformMatrix4fv(glGetUniformLocation(shaderProgramDepth, "model"), 1, GL_FALSE, glm::value_ptr((*transpMeshList[i]).model));
+                glUniformMatrix4fv(glGetUniformLocation(shaderProgramDepth, "model"), 1, GL_FALSE, glm::value_ptr(glm::translate((*transpMeshList[i]).model, -camera.Position)));
                 glBindVertexArray((*transpMeshList[i]).VAO);
                 glDrawArrays(GL_TRIANGLES, 0, (*transpMeshList[i]).vertices.size() / 3);
             }
@@ -472,11 +472,11 @@ void renderScene() {
     glUseProgram(shaderProgram);
 
     glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.01f, 600.0f);
-    glm::mat4 view = camera.GetViewMatrix();
+    glm::mat4 view = glm::lookAt(glm::vec3(0.0,0.0,0.0), glm::vec3(0.0, 0.0, 0.0) + camera.Front, camera.Up);
 
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-    glUniform3fv(glGetUniformLocation(shaderProgram, "viewPos"), 1, glm::value_ptr(camera.Position));
+    glUniform3fv(glGetUniformLocation(shaderProgram, "viewPos"), 1, glm::value_ptr(glm::vec3(0.0, 0.0, 0.0)));
     glUniform1f(glGetUniformLocation(shaderProgram, "gamma"), gamma);
 
     int shadowIndex = 0;
@@ -511,7 +511,7 @@ void renderScene() {
 
     const int TextureIndex = shadowIndex;
     for (int i = 0; i < opaqueMeshList.size(); i++) {
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr((*opaqueMeshList[i]).model));
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(glm::translate((*opaqueMeshList[i]).model, -camera.Position) ));
         glUniform4fv(glGetUniformLocation(shaderProgram, "mat.color"), 1, glm::value_ptr((*opaqueMeshList[i]).color));
         glUniform1i(glGetUniformLocation(shaderProgram, "mat.shininess"), (*opaqueMeshList[i]).shininess);
         glUniform1f(glGetUniformLocation(shaderProgram, "mat.ambianteLightMult"), (*opaqueMeshList[i]).ambianteLightMult);
@@ -527,7 +527,7 @@ void renderScene() {
     }
     //glDepthMask(GL_FALSE); 
     for (int i = 0; i < transpMeshList.size(); i++) {
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr((*transpMeshList[i]).model));
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(glm::translate((*transpMeshList[i]).model, -camera.Position)));
         glUniform4fv(glGetUniformLocation(shaderProgram, "mat.color"), 1, glm::value_ptr((*transpMeshList[i]).color));
         glUniform1i(glGetUniformLocation(shaderProgram, "mat.shininess"), (*transpMeshList[i]).shininess);
         glUniform1f(glGetUniformLocation(shaderProgram, "mat.ambianteLightMult"), (*transpMeshList[i]).ambianteLightMult);
@@ -548,22 +548,25 @@ void renderScene() {
 
     //---BOX LIGHT---
     glUseProgram(shaderLight);
-    for (int i = 0; i < lightList.size(); i++) {
-        glm::vec3 boxPos = ((*lightList[i]).type == POINT) ? (*lightList[i]).position : camera.Position + glm::float32(4.0)*glm::normalize((*lightList[i]).direction);
-        glm::mat4 modelLight = glm::mat4(glm::translate(glm::mat4(1.0f), boxPos));
-        modelLight = glm::scale(modelLight, glm::vec3(0.1f));
-        glUniformMatrix4fv(glGetUniformLocation(shaderLight, "model"), 1, GL_FALSE, glm::value_ptr(modelLight));
-        glUniformMatrix4fv(glGetUniformLocation(shaderLight, "view"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(glGetUniformLocation(shaderLight, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-        glUniform4fv(glGetUniformLocation(shaderLight, "color"), 1, glm::value_ptr(glm::vec4((*lightList[i]).color, 0.1f)));
+	bool renderBoxLight = false;
+    if (renderBoxLight) {
+        for (int i = 0; i < lightList.size(); i++) {
+            glm::vec3 boxPos = ((*lightList[i]).type == POINT) ? (*lightList[i]).position : glm::vec3(0.0, 0.0, 0.0) + glm::float32(4.0)*glm::normalize((*lightList[i]).direction);
+            glm::mat4 modelLight = glm::mat4(glm::translate(glm::mat4(1.0f), boxPos));
+            modelLight = glm::scale(modelLight, glm::vec3(0.1f));
+            glUniformMatrix4fv(glGetUniformLocation(shaderLight, "model"), 1, GL_FALSE, glm::value_ptr(modelLight));
+            glUniformMatrix4fv(glGetUniformLocation(shaderLight, "view"), 1, GL_FALSE, glm::value_ptr(view));
+            glUniformMatrix4fv(glGetUniformLocation(shaderLight, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+            glUniform4fv(glGetUniformLocation(shaderLight, "color"), 1, glm::value_ptr(glm::vec4((*lightList[i]).color, 0.9f)));
 
-        glBindVertexArray(VAO_LIGHT);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+            glBindVertexArray(VAO_LIGHT);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
     }
 
     //render bock target : //re use same thing as light
     //glUseProgram(shaderLight);
-    glUniformMatrix4fv(glGetUniformLocation(shaderLight, "model"), 1, GL_FALSE, glm::value_ptr(glm::scale(glm::mat4(glm::translate(glm::mat4(1.0f), blockTargetPos + glm::vec3(0.5, 0.5, 0.5))), glm::vec3(0.505f))));
+    glUniformMatrix4fv(glGetUniformLocation(shaderLight, "model"), 1, GL_FALSE, glm::value_ptr(glm::scale(glm::mat4(glm::translate(glm::mat4(1.0f), blockTargetPos + glm::vec3(0.5, 0.5, 0.5) - camera.Position)), glm::vec3(0.505f))));
     glUniformMatrix4fv(glGetUniformLocation(shaderLight, "view"), 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(glGetUniformLocation(shaderLight, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
     glUniform4fv(glGetUniformLocation(shaderLight, "color"), 1, glm::value_ptr(glm::vec4(1.0,1.0,1.0, 0.10f)));
@@ -571,11 +574,10 @@ void renderScene() {
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
 
-    glm::vec3 boxPos = camera.Position + camera.Front * glm::float32(0.1);
+    glm::vec3 boxPos = glm::vec3(0.0, 0.0, 0.0) + camera.Front * glm::float32(0.1);
 
-    glm::mat4 billboardMatrix = glm::inverse(glm::lookAt(boxPos, camera.Position, camera.Up));
+    glm::mat4 billboardMatrix = glm::inverse(glm::lookAt(boxPos, glm::vec3(0.0, 0.0, 0.0), camera.Up));
     glm::mat4 modelMatrix = billboardMatrix * glm::scale(glm::mat4(1.0f), glm::vec3(0.0007f));
-
 
     glUniformMatrix4fv(glGetUniformLocation(shaderLight, "model"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
     glUniformMatrix4fv(glGetUniformLocation(shaderLight, "view"), 1, GL_FALSE, glm::value_ptr(view));
@@ -583,7 +585,6 @@ void renderScene() {
     glUniform4fv(glGetUniformLocation(shaderLight, "color"), 1, glm::value_ptr(glm::vec4(1.0, 1.0, 1.0, 1.0f)));
     glBindVertexArray(VAO_LIGHT);
     glDrawArrays(GL_TRIANGLES, 0, 36);
-
 
     glfwSwapBuffers(window);
     glfwPollEvents();
@@ -597,7 +598,7 @@ glm::mat4 getLightSpaceMatrix(Light* l) {
 
     if (l->type == DIRECTIONAL) {
         lightProjection = glm::ortho(-l->width, l->width, -l->width, l->width, l->near_plane, l->far_plane);
-        lightView = glm::lookAt(camera.Position, camera.Position - l->direction, glm::vec3(0.0f, 1.0f, 0.0f));
+        lightView = glm::lookAt(glm::vec3(0.0,0.0,0.0), glm::vec3(0.0, 0.0, 0.0) - l->direction, glm::vec3(0.0f, 1.0f, 0.0f));
     }
     else {
         lightProjection = glm::perspective(l->fov, l->aspectRatio, l->near_plane, l->far_plane);

@@ -2,6 +2,7 @@
     "files.associations": {
         "xhash": "cpp",
         "utility": "cpp",
-        "cmath": "cpp"
+        "cmath": "cpp",
+        "vector": "cpp"
     }
 }
