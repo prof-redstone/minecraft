@@ -115,7 +115,7 @@ void main() {
         result += computeLight(lights[i], lightDir, viewDir, shadow);
     }
 
-    FragColor = vec4(result*gamma, mat.color.a);
+    FragColor = vec4(result * gamma, mat.color.a);
     if (mat.enableTexture == 1) {
         vec4 textureCol = texture(mat.text, fs_in.TextCoord);
         if (textureCol.w < 0.05)

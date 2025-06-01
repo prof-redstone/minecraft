@@ -25,12 +25,19 @@
     <None Include="sources\shaders\MainVertex.glsl" />
     <None Include="sources\shaders\SkyboxFrag.glsl" />
     <None Include="sources\shaders\SkyboxVertex.glsl" />
+    <None Include="sources\shaders\CompositeVertex.glsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="minecraft.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="render.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="blocks.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="structure.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>

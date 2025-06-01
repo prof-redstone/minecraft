@@ -14,7 +14,7 @@
 
 #define CHUNKWIDTH 20
 #define CHUNKHEIGHT 120
-#define RENDER_DISTANCE 10
+#define RENDER_DISTANCE 15
 
 
 int maxChunksPerFrame = 3;
@@ -119,6 +119,7 @@ vector<float> getFaceUV(int block, int face) {
     else if (block == spruce_log) { textureCo = std::vector<int>{ 18, 18, 19, 19, 18, 18 }[face]; }
     else if (block == spruce_leaves) { textureCo = std::vector<int>{ 20, 20, 20, 20, 20, 20 }[face]; }
     else if (block == cactus) { textureCo = std::vector<int>{ 16, 16, 17, 17, 16, 16 }[face]; }
+    else if (block == short_grass) { textureCo = std::vector<int>{ 21, 21, 21, 21, 21, 21 }[face]; }
 
 
     vector<float> rez = { (float)(textureCo % textureMapWidth)/textureMapWidth,(float)(textureCo / textureMapWidth) / textureMapWidth,1.0f / textureMapWidth };
@@ -172,8 +173,8 @@ bool inChunk(int i, int j, int k) {
 
 
 double blockDensity(int i, int j, int k, int seed) {
-    double weirdness = glm::clamp(db::perlin((double)i / 500.0, (double)k / 500.0, 100.0 * seed) * 10.0, -1.0, 1.0);
-    double flatness = glm::clamp(db::perlin((double)i / 500.0, (double)k / 500.0, 200.0 * seed) * 10.0, -1.0, 1.0);
+    double weirdness = glm::clamp(db::perlin((double)i / 500.0, (double)k / 500.0, 100.0 * seed) * 5.0, -1.0, 1.0);
+    double flatness = glm::clamp(db::perlin((double)i / 500.0, (double)k / 500.0, 200.0 * seed) * 5.0, -1.0, 1.0);
     double oceanity = glm::clamp(db::perlin((double)i / 500.0, (double)k / 500.0, 300.0 * seed) * 2.0,-1.0,1.0);
 
     double density = db::perlin((double)i / 86.0, (double)k / 86.0, (double)j / 86.0 + 100 * seed);
@@ -220,7 +221,7 @@ void placeBlockStructure(vector<vector<vector<signed char>>>& chunk, std::vector
         signed char blockType = std::get<3>(block);
         bool replaceExisting = std::get<4>(block);
         if (inChunk(x +lx, y+ly, z+lz)) {
-            if (replaceExisting || chunk[x+lx][y+ly][z+lz] == air) {
+            if (replaceExisting || !hasProp(chunk[x + lx][y + ly][z + lz], BP::SOLID)) {
                 chunk[x+lx][y+ly][z+lz] = blockType;
             }
         }
@@ -232,7 +233,7 @@ void initChunk(chunk& chunk, int x, int y) {
     key.x = x;
     key.y = y;
     chunk.key = key;
-    chunk.blocks.resize(CHUNKWIDTH, vector<vector<signed char>>(CHUNKHEIGHT, vector<signed char>(CHUNKWIDTH, -1)));
+    chunk.blocks.resize(CHUNKWIDTH, vector<vector<signed char>>(CHUNKHEIGHT, vector<signed char>(CHUNKWIDTH, air)));
 
     for (int i = 0; i < CHUNKWIDTH; ++i) {
         for (int k = 0; k < CHUNKWIDTH; ++k) {
@@ -256,20 +257,20 @@ void initChunk(chunk& chunk, int x, int y) {
             int biome = biomeTemperature(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed);
 			if (biome == 0) { //plains
                 for (int j = 0; j < CHUNKHEIGHT - 2; ++j) {
-                    if (chunk.blocks[i][j][k] == stone && chunk.blocks[i][j + 1][k] == air) {
+                    if (chunk.blocks[i][j][k] == stone && !hasProp(chunk.blocks[i][j + 1][k], SOLID)) {
                         chunk.blocks[i][j][k] = grass;
                     }
-                    else if (chunk.blocks[i][j][k] == stone && chunk.blocks[i][j + 2][k] == air) {
+                    else if (chunk.blocks[i][j][k] == stone && !hasProp(chunk.blocks[i][j + 2][k], SOLID)) {
                         chunk.blocks[i][j][k] = dirt;
                     }
                 }
             }
             if (biome == 1) { //plains
                 for (int j = 0; j < CHUNKHEIGHT - 2; ++j) {
-                    if (chunk.blocks[i][j][k] == stone && chunk.blocks[i][j + 1][k] == air) {
+                    if (chunk.blocks[i][j][k] == stone && !hasProp(chunk.blocks[i][j + 1][k], SOLID)) {
                         chunk.blocks[i][j][k] = snowy_grass;
                     }
-                    else if (chunk.blocks[i][j][k] == stone && chunk.blocks[i][j + 2][k] == air) {
+                    else if (chunk.blocks[i][j][k] == stone && !hasProp(chunk.blocks[i][j + 2][k], SOLID)) {
                         chunk.blocks[i][j][k] = dirt;
                     }
                 }
@@ -277,10 +278,10 @@ void initChunk(chunk& chunk, int x, int y) {
             else if (biome == 2) {
                 //desert
                 for (int j = 0; j < CHUNKHEIGHT - 2; ++j) {
-                    if (chunk.blocks[i][j][k] == stone && chunk.blocks[i][j + 1][k] == air) {
+                    if (chunk.blocks[i][j][k] == stone && !hasProp(chunk.blocks[i][j + 1][k], SOLID)) {
                         chunk.blocks[i][j][k] = sand;
                     }
-                    else if (chunk.blocks[i][j][k] == stone && chunk.blocks[i][j + 2][k] == air) {
+                    else if (chunk.blocks[i][j][k] == stone && !hasProp(chunk.blocks[i][j + 2][k], SOLID)) {
                         chunk.blocks[i][j][k] = sand;
                     }
                 }
@@ -293,7 +294,7 @@ void initChunk(chunk& chunk, int x, int y) {
             if (asATree(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed)) {
                 int h = 0;
                 for (int j = CHUNKHEIGHT - 2; j > waterHeight; --j) {
-                    if (blockDensity(i + key.x * CHUNKWIDTH, j, k + key.y * CHUNKWIDTH, seed) < 0.0) {
+                    if (blockDensity(i + key.x * CHUNKWIDTH, j, k + key.y * CHUNKWIDTH, seed) < 0.0) { //CHANGER ICI PLUS OPTI
                         h = j;
                         break;
                     }
@@ -318,11 +319,27 @@ void initChunk(chunk& chunk, int x, int y) {
             }
         }
     }
+
+    //decoration
+    /*for (int i = 0; i < CHUNKWIDTH; ++i) {
+        for (int k = 0; k < CHUNKWIDTH; ++k) {
+            int h = 0;
+            for (int j = CHUNKHEIGHT - 2; j > waterHeight; --j) {
+                if (blockDensity(i + key.x * CHUNKWIDTH, j, k + key.y * CHUNKWIDTH, seed) < 0.0) {
+                    h = j;
+                    break;
+                }
+            }
+            if (h != 0 && biomeTemperature(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) == 0) {
+				//chunk.blocks[i][h + 1][k] = short_grass;
+            }
+        }
+	}*/
 }
 
 void updateMesh(chunk& chunk) {
     chunk.opaqueMesh.clear();
-    chunk.transpMesh.clear();
+	chunk.transpMesh.clear();//with no shadow casting
 
     ChunkKey westKey = { chunk.key.x - 1, chunk.key.y };
     ChunkKey eastKey = { chunk.key.x + 1, chunk.key.y };
@@ -368,126 +385,128 @@ void updateMesh(chunk& chunk) {
             for (int k = 0; k < CHUNKWIDTH; ++k) {
                 if (chunk.blocks[i][j][k] == air) continue;
 
+				//X POSITIVE FACE
                 if (i == 0) {
-                    if (hasWestChunk && westChunk->blocks[CHUNKWIDTH - 1][j][k] <0) {
+                    if (hasWestChunk && hasProp(westChunk->blocks[CHUNKWIDTH - 1][j][k], TRANSPARENT) && (westChunk->blocks[CHUNKWIDTH - 1][j][k] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE)) ) {
                         vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 0);
-                        if (chunk.blocks[i][j][k] >= 0) {
+						if ( ! hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
                             addXNegFace(chunk.opaqueMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                         }
-                        else if (!hasWestChunk || westChunk->blocks[CHUNKWIDTH - 1][j][k] == air) {
+                        else {
                             addXNegFace(chunk.transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                         }
                     }
                 }
-                else if (chunk.blocks[i - 1][j][k] <0) {
+                else if ( hasProp(chunk.blocks[i - 1][j][k], TRANSPARENT) && (chunk.blocks[i - 1][j][k] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE)) ) {
                     vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 0);
-                    if (chunk.blocks[i][j][k] >= 0) {
+                    if (!hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
                         addXNegFace(chunk.opaqueMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                     }
-                    else if(chunk.blocks[i - 1][j][k] == air) {
+                    else{
                         addXNegFace(chunk.transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                     }
                 }
-
+				//X NEGATIVE FACE
                 if (i == CHUNKWIDTH - 1 ) {
-                    if (hasEastChunk && eastChunk->blocks[0][j][k] <0) {
+                    if (hasEastChunk && hasProp(eastChunk->blocks[0][j][k], TRANSPARENT) && (eastChunk->blocks[0][j][k] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE))) {
                         vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 1);
-                        if (chunk.blocks[i][j][k] >= 0) {
+                        if (!hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
                             addXPosFace(chunk.opaqueMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
                         }
-                        else if (!hasEastChunk || eastChunk->blocks[0][j][k] == air) {
+                        else {
                             addXPosFace(chunk.transpMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
                         }
                     }
                 }
-                else if (chunk.blocks[i + 1][j][k] <0) {
+                else if (hasProp(chunk.blocks[i + 1][j][k], TRANSPARENT) && (chunk.blocks[i + 1][j][k] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE))) {
                     vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 1);
-                    if (chunk.blocks[i][j][k] >= 0) {
+                    if (!hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
                         addXPosFace(chunk.opaqueMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
                     }
-                    else if (chunk.blocks[i + 1][j][k] == air) {
+                    else {
                         addXPosFace(chunk.transpMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
                     }
                 }
 
-                if (j == 0) {
-                    vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 2);
+                //BOTTOM FACE
+                if (j == 0) {//face vers le bas, inutile
+                    /*vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 2);
                     if (chunk.blocks[i][j][k] >= 0) {
                         //addBottomFace(chunk.mesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                     }
                     else {
                         //addBottomFace(chunk.mesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
-                    }
+                    }*/
                 }
-                else if (chunk.blocks[i][j - 1][k] <0) {
+                else if (hasProp(chunk.blocks[i][j-1][k], TRANSPARENT) && (chunk.blocks[i][j-1][k] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE))) {
                     vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 2);
-                    if (chunk.blocks[i][j][k] >= 0) {
+                    if (!hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
                         addBottomFace(chunk.opaqueMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                     }
-                    else if (chunk.blocks[i][j-1][k] == air) {
+                    else {
                         addBottomFace(chunk.transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                     }
                 }
-
+				//TOP FACE
                 if (j == CHUNKHEIGHT - 1) {
                     vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 3);
-                    if (chunk.blocks[i][j][k] >= 0) {
+                    if (!hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
                         addTopFace(chunk.opaqueMesh, i, j + 1, k, faceUV[0], faceUV[1], faceUV[2]);
                     }
                     else {
                         addTopFace(chunk.transpMesh, i, j + 1, k, faceUV[0], faceUV[1], faceUV[2]);
                     }
                 }
-                else if (chunk.blocks[i][j + 1][k] <0) {
+                else if (hasProp(chunk.blocks[i][j + 1][k], TRANSPARENT) && (chunk.blocks[i][j + 1][k] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE))) {
                     vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 3);
-                    if (chunk.blocks[i][j][k] >= 0) {
+                    if (!hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
                         addTopFace(chunk.opaqueMesh, i, j + 1, k, faceUV[0], faceUV[1], faceUV[2]);
                     }
-                    else if (chunk.blocks[i][j+1][k] == air) {
+                    else {
                         addTopFace(chunk.transpMesh, i, j + 1, k, faceUV[0], faceUV[1], faceUV[2]);
                     }
                 }
 
-                if (k == 0) {
-                    if (hasNorthChunk && northChunk->blocks[i][j][CHUNKWIDTH - 1] <0) {
 
+				//Z NEGATIVE FACE
+                if (k == 0) {
+                    if (hasNorthChunk && hasProp(northChunk->blocks[i][j][CHUNKWIDTH - 1], TRANSPARENT) && (northChunk->blocks[i][j][CHUNKWIDTH - 1] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE))) {
                         vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 4);
-                        if (chunk.blocks[i][j][k] >= 0) {
+                        if (!hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
                             addZNegFace(chunk.opaqueMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                         }
-                        else if (!hasNorthChunk || northChunk->blocks[i][j][CHUNKWIDTH - 1] == air) {
+                        else {
                             addZNegFace(chunk.transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                         }
                     }
                 }
-                else if (chunk.blocks[i][j][k - 1] <0) {
+                else if (hasProp(chunk.blocks[i][j][k-1], TRANSPARENT) && (chunk.blocks[i][j][k-1] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE))) {
                     vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 4);
-                    if (chunk.blocks[i][j][k] >= 0) {
+                    if (!hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
                         addZNegFace(chunk.opaqueMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                     }
-                    else if (chunk.blocks[i][j][k-1] == air) {
+                    else {
                         addZNegFace(chunk.transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                     }
                 }
-
+				//Z POSITIVE FACE
                 if (k == CHUNKWIDTH - 1) {
-                    if (hasSouthChunk && southChunk->blocks[i][j][0] <0) {
-
+                    if (hasSouthChunk && hasProp(southChunk->blocks[i][j][0], TRANSPARENT) && (southChunk->blocks[i][j][0] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE))) {
                         vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 5);
-                        if (chunk.blocks[i][j][k] >= 0) {
+                        if (!hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
                             addZPosFace(chunk.opaqueMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
                         }
-                        else if (!hasSouthChunk || southChunk->blocks[i][j][0] == air) {
+                        else {
                             addZPosFace(chunk.transpMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
                         }
                     }
                 }
-                else if (chunk.blocks[i][j][k + 1] <0) {
+                else if (hasProp(chunk.blocks[i][j][k+1], TRANSPARENT) && (chunk.blocks[i][j][k+1] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE))) {
                     vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 5);
-                    if (chunk.blocks[i][j][k] >= 0) {
+                    if (!hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
                         addZPosFace(chunk.opaqueMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
                     }
-                    else if (chunk.blocks[i][j][k+1] == air) {
+                    else {
                         addZPosFace(chunk.transpMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
                     }
                 }
@@ -860,7 +879,7 @@ void processKey() {
     if (camera.key8Pressed) currentBlock = oak_leaves;
 
     if (camera.flyPressed) { 
-		camera.MovementSpeed = 10.0f;
+		camera.MovementSpeed = 100.0f;
         flyMode = true; 
     }
     if (camera.walkPressed) {
@@ -869,31 +888,31 @@ void processKey() {
     }
 
     if (flyMode) {
-        if (camera.forwardPressed == GLFW_PRESS)
+        if (camera.forwardPressed)
             camera.ProcessKeyboard(FORWARD, deltaTime);
-        if (camera.backwardPressed == GLFW_PRESS)
+        if (camera.backwardPressed)
             camera.ProcessKeyboard(BACKWARD, deltaTime);
-        if (camera.leftPressed == GLFW_PRESS)
+        if (camera.leftPressed)
             camera.ProcessKeyboard(LEFT, deltaTime);
-        if (camera.rightPressed == GLFW_PRESS)
+        if (camera.rightPressed)
             camera.ProcessKeyboard(RIGHT, deltaTime);
-        if (camera.downPressed == GLFW_PRESS)
+        if (camera.downPressed)
             camera.ProcessKeyboard(DOWN, deltaTime);
-        if (camera.upPressed == GLFW_PRESS)
+        if (camera.upPressed)
             camera.ProcessKeyboard(UP, deltaTime);
     }
     else {
         glm::vec3 dPos = glm::vec3(0.0, 0.0, 0.0);
-        if (camera.forwardPressed == GLFW_PRESS) {
+        if (camera.forwardPressed) {
             dPos += glm::normalize(glm::vec3(camera.Front.x, 0.0f, camera.Front.z)) * camera.MovementSpeed * deltaTime;
         }
-        if (camera.backwardPressed == GLFW_PRESS) {
+        if (camera.backwardPressed) {
             dPos += glm::normalize(glm::vec3(camera.Front.x, 0.0f, camera.Front.z)) * -camera.MovementSpeed * deltaTime;
         }
-        if (camera.rightPressed == GLFW_PRESS) {
+        if (camera.rightPressed) {
             dPos += glm::normalize(glm::vec3(camera.Right.x, 0.0f, camera.Right.z)) * camera.MovementSpeed * deltaTime;
         }
-        if (camera.leftPressed == GLFW_PRESS) {
+        if (camera.leftPressed) {
             dPos += glm::normalize(glm::vec3(camera.Right.x, 0.0f, camera.Right.z)) * -camera.MovementSpeed * deltaTime;
         }
 
@@ -916,7 +935,7 @@ void processKey() {
         ChunkKey chunkKeyLeft = { chunkXLeft, chunkZLeft };
         auto chunkItLeft = chunks.find(chunkKeyLeft);
         if (chunkItLeft != chunks.end() && chunkItLeft->second.isActive) {
-            if (chunkItLeft->second.blocks[localXLeft][blockHead][localZLeft] != air || chunkItLeft->second.blocks[localXLeft][blockBelly][localZLeft] != air || chunkItLeft->second.blocks[localXLeft][blockFoot][localZLeft] != air) {
+            if (hasProp(chunkItLeft->second.blocks[localXLeft][blockHead][localZLeft], SOLID) || hasProp(chunkItLeft->second.blocks[localXLeft][blockBelly][localZLeft], SOLID) || hasProp(chunkItLeft->second.blocks[localXLeft][blockFoot][localZLeft], SOLID) ) {
                 leftBlockFree = false;
             }
         }
@@ -928,7 +947,7 @@ void processKey() {
         ChunkKey chunkKeyRight = { chunkXRight, chunkZRight };
         auto chunkItRight = chunks.find(chunkKeyRight);
         if (chunkItRight != chunks.end() && chunkItRight->second.isActive) {
-            if (chunkItRight->second.blocks[localXRight][blockHead][localZRight] != air || chunkItRight->second.blocks[localXRight][blockBelly][localZRight] != air || chunkItRight->second.blocks[localXRight][blockFoot][localZRight] != air) {
+            if (hasProp(chunkItRight->second.blocks[localXRight][blockHead][localZRight], SOLID) || hasProp(chunkItRight->second.blocks[localXRight][blockBelly][localZRight], SOLID) || hasProp(chunkItRight->second.blocks[localXRight][blockFoot][localZRight], SOLID)) {
                 rightBlockFree = false;
                 
             }
@@ -941,7 +960,7 @@ void processKey() {
         ChunkKey chunkKeyForward = { chunkXForward, chunkZForward };
         auto chunkItForward = chunks.find(chunkKeyForward);
         if (chunkItForward != chunks.end() && chunkItForward->second.isActive) {
-            if (chunkItForward->second.blocks[localXForward][blockHead][localZForward] != air || chunkItForward->second.blocks[localXForward][blockBelly][localZForward] != air || chunkItForward->second.blocks[localXForward][blockFoot][localZForward] != air) {
+            if (hasProp(chunkItForward->second.blocks[localXForward][blockHead][localZForward], SOLID) || hasProp(chunkItForward->second.blocks[localXForward][blockBelly][localZForward], SOLID) || hasProp(chunkItForward->second.blocks[localXForward][blockFoot][localZForward], SOLID) ) {
                 forwardBlockFree = false;
             }
         }
@@ -953,7 +972,7 @@ void processKey() {
         ChunkKey chunkKeyBackward = { chunkXBackward, chunkZBackward };
         auto chunkItBackward = chunks.find(chunkKeyBackward);
         if (chunkItBackward != chunks.end() && chunkItBackward->second.isActive) {
-            if (chunkItBackward->second.blocks[localXBackward][blockHead][localZBackward] != air || chunkItBackward->second.blocks[localXBackward][blockBelly][localZBackward] != air || chunkItBackward->second.blocks[localXBackward][blockFoot][localZBackward] != air) {
+            if (hasProp(chunkItBackward->second.blocks[localXBackward][blockHead][localZBackward], SOLID) || hasProp(chunkItBackward->second.blocks[localXBackward][blockBelly][localZBackward], SOLID) || hasProp(chunkItBackward->second.blocks[localXBackward][blockFoot][localZBackward], SOLID)) {
                 BackwardBlockFree = false;
             }
         }
@@ -987,7 +1006,7 @@ void processKey() {
 
         if (chunkIt != chunks.end() && chunkIt->second.isActive) {
             if (camera.Yspeed <= 0.0) {
-                bool blockBelow = chunkIt->second.blocks[localX][(int)(posY - playerHeight)][localZ] != air;
+                bool blockBelow = hasProp(chunkIt->second.blocks[localX][(int)(posY - playerHeight)][localZ], SOLID);
                 
                 if (blockBelow) {
                     float desiredY = (float)((int)(posY - playerHeight) + 1) + playerHeight;
@@ -999,7 +1018,7 @@ void processKey() {
                 }
             }
             else if (camera.Yspeed > 0.0) {
-                bool blockAbove = chunkIt->second.blocks[localX][(int)(posY)][localZ] != air;
+                bool blockAbove = hasProp(chunkIt->second.blocks[localX][(int)(posY)][localZ], SOLID);
                 
                 if (blockAbove) {
                     float desiredY = (float)((int)(posY));
@@ -1011,7 +1030,7 @@ void processKey() {
             }
         }
 
-        if (camera.spacePressed == GLFW_PRESS && isOnGround) {
+        if (camera.spacePressed && isOnGround) {
             camera.Yspeed = jumpHeight;
         }
         

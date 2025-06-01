@@ -2,6 +2,7 @@
 #include <vector>
 #include "blocks.h"
 
+
 //3 co x y z, block_type, should replace existing block
 inline const std::vector<std::tuple<int, int, int, int, int>> oak_tree_1 = {
 
@@ -56,7 +57,7 @@ inline const std::vector<std::tuple<int, int, int, int, int>> spruce_tree_1 = {
     {1, 3, 0, spruce_leaves, 0},
     {2, 3, 0, spruce_leaves, 0},
     {2, 3, 1, spruce_leaves, 0},
-	{2, 3, -1, spruce_leaves, 0},
+    {2, 3, -1, spruce_leaves, 0},
     {1, 3, 1, spruce_leaves, 0},
     {1, 3, -1, spruce_leaves, 0},
     {0, 3, 1, spruce_leaves, 0},
@@ -79,7 +80,7 @@ inline const std::vector<std::tuple<int, int, int, int, int>> spruce_tree_1 = {
     {0, 4, 1, spruce_leaves, 0},
     {0, 4, -1, spruce_leaves, 0},
 
-    
+
     {1, 5, 0, spruce_leaves, 0},
     {2, 5, 0, spruce_leaves, 0},
     {1, 5, 1, spruce_leaves, 0},
@@ -106,27 +107,27 @@ inline const std::vector<std::tuple<int, int, int, int, int>> spruce_tree_1 = {
     {-1, 7, 1, spruce_leaves, 0},
     {-1, 7, 0, spruce_leaves, 0},
     {-1, 7, -1, spruce_leaves, 0},
-    
+
     {1, 8, 0, spruce_leaves, 0},
     {-1, 8, 0, spruce_leaves, 0},
     {0, 8, 1, spruce_leaves, 0},
-	{0, 8, -1, spruce_leaves, 0},
+    {0, 8, -1, spruce_leaves, 0},
 
-	{0, 9, 0, spruce_leaves, 0}
+    {0, 9, 0, spruce_leaves, 0}
 };
 
 inline const std::vector<std::tuple<int, int, int, int, int>> cactus_1 = {
-	{0, 1, 0, cactus, 1},
-	{0, 2, 0, cactus, 1},
-	{0, 3, 0, cactus, 1}
+    {0, 1, 0, cactus, 1},
+    {0, 2, 0, cactus, 1},
+    {0, 3, 0, cactus, 1}
 };
 
 
 inline const std::vector<std::tuple<int, int, int, int, int>> cactus_2 = {
-	{0, 1, 0, cactus, 1},
-	{0, 2, 0, cactus, 1},
-	{0, 3, 0, cactus, 1},
-	{0, 4, 0, cactus, 1}
+    {0, 1, 0, cactus, 1},
+    {0, 2, 0, cactus, 1},
+    {0, 3, 0, cactus, 1},
+    {0, 4, 0, cactus, 1}
 };
 
 inline const std::vector<std::tuple<int, int, int, int, int>> cactus_3 = {

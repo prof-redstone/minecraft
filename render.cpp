@@ -419,7 +419,7 @@ void renderScene() {
     float currentFrame = static_cast<float>(glfwGetTime());
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
-    //calculerEtAfficherMoyenneFPS(1.0 / deltaTime, 60);
+    calculerEtAfficherMoyenneFPS(1.0 / deltaTime, 60);
     //std::cout <<  deltaTime << std::endl;
 
 
@@ -510,6 +510,7 @@ void renderScene() {
     glUniform1i(glGetUniformLocation(shaderProgram, "numLights"), lightList.size());
 
     const int TextureIndex = shadowIndex;
+
     for (int i = 0; i < opaqueMeshList.size(); i++) {
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(glm::translate((*opaqueMeshList[i]).model, -camera.Position) ));
         glUniform4fv(glGetUniformLocation(shaderProgram, "mat.color"), 1, glm::value_ptr((*opaqueMeshList[i]).color));
@@ -527,6 +528,7 @@ void renderScene() {
     }
 
 
+    //glDepthMask(GL_FALSE);
     for (int i = 0; i < transpMeshList.size(); i++) {
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(glm::translate((*transpMeshList[i]).model, -camera.Position)));
         glUniform4fv(glGetUniformLocation(shaderProgram, "mat.color"), 1, glm::value_ptr((*transpMeshList[i]).color));
@@ -541,8 +543,8 @@ void renderScene() {
         }
         glBindVertexArray((*transpMeshList[i]).VAO);
         glDrawArrays(GL_TRIANGLES, 0, (*transpMeshList[i]).vertices.size() / 3);
-    }    
-
+    }
+    //glDepthMask(GL_TRUE);
 
     //---BOX LIGHT---
     glUseProgram(shaderLight);
@@ -572,8 +574,8 @@ void renderScene() {
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
 
+    //cube pointeur GUI
     glm::vec3 boxPos = glm::vec3(0.0, 0.0, 0.0) + camera.Front * glm::float32(0.1);
-
     glm::mat4 billboardMatrix = glm::inverse(glm::lookAt(boxPos, glm::vec3(0.0, 0.0, 0.0), camera.Up));
     glm::mat4 modelMatrix = billboardMatrix * glm::scale(glm::mat4(1.0f), glm::vec3(0.0007f));
 
@@ -1007,17 +1009,27 @@ std::vector<float> computeNormalsTexture(const std::vector<float>& verts) {
     return normals;
 }
 
-void calculerEtAfficherMoyenneFPS(float fps, int tailleMax = 60) {
+void calculerEtAfficherMoyenneFPS(float fps, int tailleMax = 1000) {
     static std::vector<float> tableauFPS;
 
     tableauFPS.push_back(fps);
 
     if (tableauFPS.size() >= tailleMax) {
         float somme = 0.0f;
+        float minFPS = std::numeric_limits<float>::max();
+
         for (const auto& valeur : tableauFPS) {
             somme += valeur;
+            if (valeur < minFPS) {
+                minFPS = valeur;
+            }
         }
-        std::cout << "FPS : " << static_cast<int>(somme / tableauFPS.size()) << std::endl;
+
+        float moyenne = somme / tableauFPS.size();
+
+        std::cout << "FPS: Moyenne=" << static_cast<int>(moyenne)
+            << ", Min=" << static_cast<int>(minFPS) << std::endl;
+
         tableauFPS.clear();
     }
 }

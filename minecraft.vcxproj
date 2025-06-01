@@ -136,6 +136,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="Frag.glsl" />
+    <None Include="sources\shaders\CompositeVertex.glsl" />
     <None Include="sources\shaders\DepthShadowFrag.glsl" />
     <None Include="sources\shaders\DepthShadowVertex.glsl" />
     <None Include="sources\shaders\LightFrag.glsl" />
@@ -147,8 +148,10 @@
     <None Include="Vertex.glsl" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="blocks.cpp" />
     <ClCompile Include="minecraft.cpp" />
     <ClCompile Include="render.cpp" />
+    <ClCompile Include="structure.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="blocks.h" />
