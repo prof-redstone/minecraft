@@ -103,6 +103,39 @@ void addZNegFace(vector<float>& mesh, float x, float y, float z, float ou, float
         });
 }
 
+void addPlantFace(vector<float>& mesh, float x, float y, float z, float ou, float ov, float s) {
+    mesh.insert(mesh.end(), {
+        x-1, y, z, ou, ov + s,
+        x-1, y + 1, z, ou, ov,
+        x, y + 1, z + 1, ou + s, ov,
+        x-1, y, z, ou, ov + s,
+        x, y + 1, z + 1, ou + s, ov,
+        x, y, z + 1, ou + s, ov + s,
+
+        x, y, z, ou, ov + s,
+        x, y + 1, z, ou, ov,
+        x-1, y + 1, z + 1, ou + s, ov,
+        x, y, z, ou, ov + s,
+        x-1, y + 1, z + 1, ou + s, ov,
+        x-1, y, z + 1, ou + s, ov + s,
+
+        x - 1, y + 1, z, ou, ov,
+        x - 1, y, z, ou, ov + s,
+        x, y + 1, z + 1, ou + s, ov,
+        x, y + 1, z + 1, ou + s, ov,
+        x - 1, y, z, ou, ov + s,
+        x, y, z + 1, ou + s, ov + s,
+
+        x, y + 1, z, ou, ov,
+        x, y, z, ou, ov + s,
+        x - 1, y + 1, z + 1, ou + s, ov,
+        x - 1, y + 1, z + 1, ou + s, ov,
+        x, y, z, ou, ov + s,
+        x - 1, y, z + 1, ou + s, ov + s
+        
+    });
+}
+
 vector<float> getFaceUV(int block, int face) {
     int textureCo = 0;
     if(block == stone){ textureCo = std::vector<int>{ 0, 0, 0, 0, 0, 0 }[face];}
@@ -120,6 +153,12 @@ vector<float> getFaceUV(int block, int face) {
     else if (block == spruce_leaves) { textureCo = std::vector<int>{ 20, 20, 20, 20, 20, 20 }[face]; }
     else if (block == cactus) { textureCo = std::vector<int>{ 16, 16, 17, 17, 16, 16 }[face]; }
     else if (block == short_grass) { textureCo = std::vector<int>{ 21, 21, 21, 21, 21, 21 }[face]; }
+    else if (block == poppy) { textureCo = std::vector<int>{ 22, 22, 22, 22, 22, 22 }[face]; }
+    else if (block == dandelion) { textureCo = std::vector<int>{ 23, 23, 23, 23, 23, 23 }[face]; }
+    else if (block == dead_bush) { textureCo = std::vector<int>{ 24, 24, 24, 24, 24, 24 }[face]; }
+    else if (block == sweet_berry) { textureCo = std::vector<int>{ 25, 25, 25, 25, 25, 25 }[face]; }
+    else if (block == kelp) { textureCo = std::vector<int>{ 27, 27, 27, 27, 27, 27 }[face]; }
+    else if (block == gravel) { textureCo = std::vector<int>{ 11, 11, 11, 11, 11, 11 }[face]; }
 
 
     vector<float> rez = { (float)(textureCo % textureMapWidth)/textureMapWidth,(float)(textureCo / textureMapWidth) / textureMapWidth,1.0f / textureMapWidth };
@@ -193,7 +232,7 @@ double blockDensity(int i, int j, int k, int seed) {
 }
 
 bool asATree(int x, int y , int seed) {
-    if ((x + y) % 2 == 0) return false;
+    if ((x + y) % 4 != 0) return false;
     double proba = db::perlin((double)x / 200.0, (double)y / 200.0, (double)(100 * seed))+1.0;
     double density = 0.07;
     if (proba < 0.7) density = 0.003;
@@ -239,43 +278,72 @@ void initChunk(chunk& chunk, int x, int y) {
     chunk.key = key;
     chunk.blocks.resize(CHUNKWIDTH, vector<vector<signed char>>(CHUNKHEIGHT, vector<signed char>(CHUNKWIDTH, air)));
 
+    //vector de taille CHUNKWIDTH par CHUNKWIDTH de int :
+	vector<vector<int>> surfaceLevel(CHUNKWIDTH, vector<int>(CHUNKHEIGHT, 0));
+
+
     for (int i = 0; i < CHUNKWIDTH; ++i) {
         for (int k = 0; k < CHUNKWIDTH; ++k) {
+            //density gen
             for (int j = 0; j < CHUNKHEIGHT; ++j) {
                 if (blockDensity(i + key.x * CHUNKWIDTH,j, k + key.y * CHUNKWIDTH, seed) < 0.0) {
+                    if(j > surfaceLevel[i][k]) {
+                        surfaceLevel[i][k] = j;
+					}
                     chunk.blocks[i][j][k] = stone;
-                }
-                else {
+                }else {
                     if (j > waterHeight) {
                         chunk.blocks[i][j][k] = air;
                     }
                     else {
                         chunk.blocks[i][j][k] = water;
                     }
-                }
+                }                
             }
-        }
-    }
-    for (int i = 0; i < CHUNKWIDTH; ++i) {
-        for (int k = 0; k < CHUNKWIDTH; ++k) {
+            //differentiation
             int biome = biomeTemperature(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed);
-			if (biome == 0) { //plains
+            if (biome == 0) { //plains
                 for (int j = 0; j < CHUNKHEIGHT - 2; ++j) {
-                    if (chunk.blocks[i][j][k] == stone && !hasProp(chunk.blocks[i][j + 1][k], SOLID)) {
-                        chunk.blocks[i][j][k] = grass;
+                    if (j >= waterHeight) {
+                        if (chunk.blocks[i][j][k] == stone && !hasProp(chunk.blocks[i][j + 1][k], SOLID)) {
+                            chunk.blocks[i][j][k] = grass;
+                        }
+                        else if (chunk.blocks[i][j][k] == stone && !hasProp(chunk.blocks[i][j + 2][k], SOLID)) {
+                            chunk.blocks[i][j][k] = dirt;
+                        }
+                    }else {
+                        if (chunk.blocks[i][j][k] == stone && chunk.blocks[i][j + 1][k] == water) {
+                            chunk.blocks[i][j][k] = sand;
+                        }
                     }
-                    else if (chunk.blocks[i][j][k] == stone && !hasProp(chunk.blocks[i][j + 2][k], SOLID)) {
-                        chunk.blocks[i][j][k] = dirt;
+
+                    if ((j == waterHeight) && (chunk.blocks[i][j][k] == grass) 
+                        || (j == waterHeight+1) && (chunk.blocks[i][j][k] == grass) 
+                        || (j == waterHeight) && (chunk.blocks[i][j][k] == dirt)) {
+                        chunk.blocks[i][j][k] = sand;
                     }
                 }
             }
             if (biome == 1) { //plains
                 for (int j = 0; j < CHUNKHEIGHT - 2; ++j) {
-                    if (chunk.blocks[i][j][k] == stone && !hasProp(chunk.blocks[i][j + 1][k], SOLID)) {
-                        chunk.blocks[i][j][k] = snowy_grass;
+                    if (j >= waterHeight) {
+                        if (chunk.blocks[i][j][k] == stone && !hasProp(chunk.blocks[i][j + 1][k], SOLID)) {
+                            chunk.blocks[i][j][k] = snowy_grass;
+                        }
+                        else if (chunk.blocks[i][j][k] == stone && !hasProp(chunk.blocks[i][j + 2][k], SOLID)) {
+                            chunk.blocks[i][j][k] = dirt;
+                        }
                     }
-                    else if (chunk.blocks[i][j][k] == stone && !hasProp(chunk.blocks[i][j + 2][k], SOLID)) {
-                        chunk.blocks[i][j][k] = dirt;
+                    else {
+                        if (chunk.blocks[i][j][k] == stone && chunk.blocks[i][j + 1][k] == water) {
+                            chunk.blocks[i][j][k] = gravel;
+                        }
+                    }
+
+                    if ((j == waterHeight) && (chunk.blocks[i][j][k] == snowy_grass)
+                        || (j == waterHeight + 1) && (chunk.blocks[i][j][k] == snowy_grass)
+                        || (j == waterHeight) && (chunk.blocks[i][j][k] == dirt)) {
+                        chunk.blocks[i][j][k] = gravel;
                     }
                 }
             }
@@ -289,26 +357,36 @@ void initChunk(chunk& chunk, int x, int y) {
                         chunk.blocks[i][j][k] = sand;
                     }
                 }
-			}
+            }
+
+
         }
     }
     //tree
-    for (int i = -2; i < CHUNKWIDTH+2; ++i) {
+    for (int i = -2; i < CHUNKWIDTH + 2; ++i) {
         for (int k = -2; k < CHUNKWIDTH+2; ++k) {
             if (asATree(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed)) {
                 int h = 0;
-                for (int j = CHUNKHEIGHT - 2; j > waterHeight; --j) {
-                    if (blockDensity(i + key.x * CHUNKWIDTH, j, k + key.y * CHUNKWIDTH, seed) < 0.0) { //CHANGER ICI PLUS OPTI
-                        h = j;
-                        break;
+                if (i < 0 || k < 0 || i >= CHUNKWIDTH || k >= CHUNKWIDTH) {
+                    for (int j = CHUNKHEIGHT - 2; j >= waterHeight; --j) {
+                        if (blockDensity(i + key.x * CHUNKWIDTH, j, k + key.y * CHUNKWIDTH, seed) < 0.0) {
+                            h = j;
+                            break;
+                        }
                     }
+                }else {
+					h = surfaceLevel[i][k];                    
                 }
+                if (h < waterHeight+2) {
+                    break;
+                }
+
                 if (h != 0 && biomeTemperature(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) == 0) {
 					placeBlockStructure(chunk.blocks, oak_tree_1, i,h,k);
-                }
+                }else
                 if (h != 0 && biomeTemperature(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) == 1) {
                     placeBlockStructure(chunk.blocks, spruce_tree_1, i, h, k);
-                }
+                }else
                 if (h != 0 && biomeTemperature(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) == 2 && (i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH)%11 == 0) {
                     if ((i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH) % 5 == 0) {
                         placeBlockStructure(chunk.blocks, cactus_2, i, h, k);
@@ -325,20 +403,40 @@ void initChunk(chunk& chunk, int x, int y) {
     }
 
     //decoration
-    /*for (int i = 0; i < CHUNKWIDTH; ++i) {
+    for (int i = 0; i < CHUNKWIDTH; ++i) {
         for (int k = 0; k < CHUNKWIDTH; ++k) {
-            int h = 0;
-            for (int j = CHUNKHEIGHT - 2; j > waterHeight; --j) {
-                if (blockDensity(i + key.x * CHUNKWIDTH, j, k + key.y * CHUNKWIDTH, seed) < 0.0) {
-                    h = j;
-                    break;
-                }
+            int h = surfaceLevel[i][k];
+            if (h < waterHeight || chunk.blocks[i][h + 1][k] != air) {
+                break;
             }
             if (h != 0 && biomeTemperature(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) == 0) {
-				//chunk.blocks[i][h + 1][k] = short_grass;
+                if ((hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) % 100) < 4) {
+				    chunk.blocks[i][h + 1][k] = short_grass;
+                    continue;
+                }
+                if ((hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed + 1) % 100) < 1) {
+                    chunk.blocks[i][h + 1][k] = poppy;
+                    continue;
+                }
+                if ((hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed + 2) % 100) < 1) {
+                    chunk.blocks[i][h + 1][k] = dandelion;
+                    continue;
+                }
+            }
+            if (h != 0 && biomeTemperature(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) == 1) {
+                if ((hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) % 100) < 1) {
+                    chunk.blocks[i][h + 1][k] = sweet_berry;
+                    continue;
+                }
+            }
+            if (h != 0 && biomeTemperature(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) == 2) {
+                if ((hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) % 200) < 1) {
+                    chunk.blocks[i][h + 1][k] = dead_bush;
+                    continue;
+                }
             }
         }
-	}*/
+	}
 }
 
 void updateMesh(chunk& chunk) {
@@ -390,6 +488,11 @@ void updateMesh(chunk& chunk) {
         for (int j = 0; j < CHUNKHEIGHT; ++j) {
             for (int k = 0; k < CHUNKWIDTH; ++k) {
                 if (chunk.blocks[i][j][k] == air) continue;
+                if (hasProp(chunk.blocks[i][j][k], PLANT)) {
+                    vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 0);
+                    addPlantFace(chunk.opaqueNoShadowMesh, i+1, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                    continue;
+                }
 
 				//X POSITIVE FACE
                 if (i == 0) {
@@ -749,8 +852,21 @@ void processChunkQueues() {
                 chunk.transpMeshObj = nullptr;
             }
             chunk.transpMesh.clear();
-
             chunk.transpMesh.shrink_to_fit();
+
+            if (chunk.opaqueNoShadowMeshObj != nullptr) {
+                deleteMesh(chunk.opaqueNoShadowMeshObj);
+                chunk.opaqueNoShadowMeshObj = nullptr;
+            }
+            chunk.opaqueNoShadowMesh.clear();
+            chunk.opaqueNoShadowMesh.shrink_to_fit();
+
+            if (chunk.transpNoShadowMeshObj != nullptr) {
+                deleteMesh(chunk.transpNoShadowMeshObj);
+                chunk.transpNoShadowMeshObj = nullptr;
+            }
+            chunk.transpNoShadowMesh.clear();
+            chunk.transpNoShadowMesh.shrink_to_fit();
 
             chunk.isActive = false;
 

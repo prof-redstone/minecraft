@@ -17,6 +17,12 @@
 #define spruce_leaves 13
 #define water 14
 #define short_grass 15
+#define poppy 16
+#define dandelion 17
+#define dead_bush 18
+#define sweet_berry 19
+#define kelp 20
+#define gravel 21
 
 
 enum BP {//block properties
@@ -45,6 +51,13 @@ const std::uint32_t BLOCK_PROP[] = {
     TRANSPARENT|RENDER_INSIDE,        // spruce_leaves
     TRANSPARENT|DONT_CAST_SHADOW|SEMI_TRANSPARENT,// water
     PLANT|TRANSPARENT|DONT_CAST_SHADOW,// short grass
+    PLANT|TRANSPARENT|DONT_CAST_SHADOW,//poppy
+    PLANT | TRANSPARENT | DONT_CAST_SHADOW,//dandelion
+    PLANT | TRANSPARENT | DONT_CAST_SHADOW,//dead bush
+    PLANT | TRANSPARENT | DONT_CAST_SHADOW,//sweet berry
+    PLANT | TRANSPARENT | DONT_CAST_SHADOW,//kelp
+    SOLID,                            // gravel 
+
 };
 
 bool hasProp(int block_id, BP prop);
