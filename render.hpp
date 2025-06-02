@@ -91,11 +91,9 @@ std::vector<float> addNormals(const std::vector<float>& verts);
 
 // Setup des objets
 void setMeshTextureFile(Mesh* mesh,const char* path);
-Mesh* setupOpaqueMeshTexture(std::vector<float> vertices, const glm::vec3& position = glm::vec3(0.0f, 0.0f, 0.0f));
-Mesh* setupTranspMeshTexture(std::vector<float> vertices, const glm::vec3& position = glm::vec3(0.0f, 0.0f, 0.0f));
+Mesh* setupMeshTexture(std::vector<float> vertices, const glm::vec3& position, bool transp, bool shadow);
 void deleteMesh(Mesh* mesh);
 void updateMeshTexture(Mesh* mesh, std::vector<float> vertices);
-void updateMesh(Mesh* mesh, std::vector<float> vertices);
 void setMeshPosition(Mesh* mesh, const glm::vec3& position);
 void setMeshColor(Mesh* mesh, const glm::vec4& color);
 void setMeshShininess(Mesh* mesh, int shininess);

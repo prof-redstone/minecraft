@@ -148,9 +148,13 @@ typedef struct chunk {
     ChunkKey key;
     vector<vector<vector<signed char>>> blocks;
     std::vector<float> opaqueMesh;
+    std::vector<float> opaqueNoShadowMesh;
     std::vector<float> transpMesh;
+    std::vector<float> transpNoShadowMesh;
     Mesh* opaqueMeshObj = nullptr;
     Mesh* transpMeshObj = nullptr;
+    Mesh* opaqueNoShadowMeshObj = nullptr;
+    Mesh* transpNoShadowMeshObj = nullptr;
     bool isActive = false;
 } Chunk;
 
@@ -339,7 +343,9 @@ void initChunk(chunk& chunk, int x, int y) {
 
 void updateMesh(chunk& chunk) {
     chunk.opaqueMesh.clear();
-	chunk.transpMesh.clear();//with no shadow casting
+    chunk.opaqueNoShadowMesh.clear();
+	chunk.transpMesh.clear();
+    chunk.transpNoShadowMesh.clear();
 
     ChunkKey westKey = { chunk.key.x - 1, chunk.key.y };
     ChunkKey eastKey = { chunk.key.x + 1, chunk.key.y };
@@ -390,20 +396,40 @@ void updateMesh(chunk& chunk) {
                     if (hasWestChunk && hasProp(westChunk->blocks[CHUNKWIDTH - 1][j][k], TRANSPARENT) && (westChunk->blocks[CHUNKWIDTH - 1][j][k] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE)) ) {
                         vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 0);
 						if ( ! hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
-                            addXNegFace(chunk.opaqueMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            if (!hasProp(chunk.blocks[i][j][k], SEMI_TRANSPARENT)) {
+                                addXNegFace(chunk.opaqueMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            }
+                            else {
+                                addXNegFace(chunk.transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            }
                         }
                         else {
-                            addXNegFace(chunk.transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            if (!hasProp(chunk.blocks[i][j][k], SEMI_TRANSPARENT)) {
+                                addXNegFace(chunk.opaqueNoShadowMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            }
+                            else {
+                                addXNegFace(chunk.transpNoShadowMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            }
                         }
                     }
                 }
                 else if ( hasProp(chunk.blocks[i - 1][j][k], TRANSPARENT) && (chunk.blocks[i - 1][j][k] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE)) ) {
                     vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 0);
                     if (!hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
-                        addXNegFace(chunk.opaqueMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        if (!hasProp(chunk.blocks[i][j][k], SEMI_TRANSPARENT)) {
+                            addXNegFace(chunk.opaqueMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        }
+                        else {
+                            addXNegFace(chunk.transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        }
                     }
-                    else{
-                        addXNegFace(chunk.transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                    else {
+                        if (!hasProp(chunk.blocks[i][j][k], SEMI_TRANSPARENT)) {
+                            addXNegFace(chunk.opaqueNoShadowMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        }
+                        else {
+                            addXNegFace(chunk.transpNoShadowMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        }
                     }
                 }
 				//X NEGATIVE FACE
@@ -411,20 +437,40 @@ void updateMesh(chunk& chunk) {
                     if (hasEastChunk && hasProp(eastChunk->blocks[0][j][k], TRANSPARENT) && (eastChunk->blocks[0][j][k] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE))) {
                         vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 1);
                         if (!hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
-                            addXPosFace(chunk.opaqueMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            if (!hasProp(chunk.blocks[i][j][k], SEMI_TRANSPARENT)) {
+                                addXPosFace(chunk.opaqueMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            }
+                            else {
+                                addXPosFace(chunk.transpMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            }
                         }
                         else {
-                            addXPosFace(chunk.transpMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            if (!hasProp(chunk.blocks[i][j][k], SEMI_TRANSPARENT)) {
+                                addXPosFace(chunk.opaqueNoShadowMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            }
+                            else {
+                                addXPosFace(chunk.transpNoShadowMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            }
                         }
                     }
                 }
                 else if (hasProp(chunk.blocks[i + 1][j][k], TRANSPARENT) && (chunk.blocks[i + 1][j][k] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE))) {
                     vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 1);
                     if (!hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
-                        addXPosFace(chunk.opaqueMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        if (!hasProp(chunk.blocks[i][j][k], SEMI_TRANSPARENT)) {
+                            addXPosFace(chunk.opaqueMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        }
+                        else {
+                            addXPosFace(chunk.transpMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        }
                     }
                     else {
-                        addXPosFace(chunk.transpMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        if (!hasProp(chunk.blocks[i][j][k], SEMI_TRANSPARENT)) {
+                            addXPosFace(chunk.opaqueNoShadowMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        }
+                        else {
+                            addXPosFace(chunk.transpNoShadowMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        }
                     }
                 }
 
@@ -441,29 +487,59 @@ void updateMesh(chunk& chunk) {
                 else if (hasProp(chunk.blocks[i][j-1][k], TRANSPARENT) && (chunk.blocks[i][j-1][k] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE))) {
                     vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 2);
                     if (!hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
-                        addBottomFace(chunk.opaqueMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        if (!hasProp(chunk.blocks[i][j][k], SEMI_TRANSPARENT)) {
+                            addBottomFace(chunk.opaqueMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        }
+                        else {
+                            addBottomFace(chunk.transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        }
                     }
                     else {
-                        addBottomFace(chunk.transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        if (!hasProp(chunk.blocks[i][j][k], SEMI_TRANSPARENT)) {
+                            addBottomFace(chunk.opaqueNoShadowMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        }
+                        else {
+                            addBottomFace(chunk.transpNoShadowMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        }
                     }
                 }
 				//TOP FACE
                 if (j == CHUNKHEIGHT - 1) {
                     vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 3);
                     if (!hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
-                        addTopFace(chunk.opaqueMesh, i, j + 1, k, faceUV[0], faceUV[1], faceUV[2]);
+                        if (!hasProp(chunk.blocks[i][j][k], SEMI_TRANSPARENT)) {
+                            addTopFace(chunk.opaqueMesh, i, j + 1, k, faceUV[0], faceUV[1], faceUV[2]);
+                        }
+                        else {
+                            addTopFace(chunk.transpMesh, i, j + 1, k, faceUV[0], faceUV[1], faceUV[2]);
+                        }
                     }
                     else {
-                        addTopFace(chunk.transpMesh, i, j + 1, k, faceUV[0], faceUV[1], faceUV[2]);
+                        if (!hasProp(chunk.blocks[i][j][k], SEMI_TRANSPARENT)) {
+                            addTopFace(chunk.opaqueNoShadowMesh, i, j + 1, k, faceUV[0], faceUV[1], faceUV[2]);
+                        }
+                        else {
+                            addTopFace(chunk.transpNoShadowMesh, i, j + 1, k, faceUV[0], faceUV[1], faceUV[2]);
+                        }
                     }
                 }
                 else if (hasProp(chunk.blocks[i][j + 1][k], TRANSPARENT) && (chunk.blocks[i][j + 1][k] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE))) {
                     vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 3);
                     if (!hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
-                        addTopFace(chunk.opaqueMesh, i, j + 1, k, faceUV[0], faceUV[1], faceUV[2]);
+                        if (!hasProp(chunk.blocks[i][j][k], SEMI_TRANSPARENT)) {
+                            addTopFace(chunk.opaqueMesh, i, j + 1, k, faceUV[0], faceUV[1], faceUV[2]);
+                        }
+                        else {
+                            addTopFace(chunk.transpMesh, i, j + 1, k, faceUV[0], faceUV[1], faceUV[2]);
+                        }
                     }
                     else {
-                        addTopFace(chunk.transpMesh, i, j + 1, k, faceUV[0], faceUV[1], faceUV[2]);
+                        if (!hasProp(chunk.blocks[i][j][k], SEMI_TRANSPARENT)) {
+                            addTopFace(chunk.opaqueNoShadowMesh, i, j + 1, k, faceUV[0], faceUV[1], faceUV[2]);
+                        }
+                        else {
+                            addTopFace(chunk.transpNoShadowMesh, i, j + 1, k, faceUV[0], faceUV[1], faceUV[2]);
+                        }
                     }
                 }
 
@@ -473,20 +549,40 @@ void updateMesh(chunk& chunk) {
                     if (hasNorthChunk && hasProp(northChunk->blocks[i][j][CHUNKWIDTH - 1], TRANSPARENT) && (northChunk->blocks[i][j][CHUNKWIDTH - 1] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE))) {
                         vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 4);
                         if (!hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
-                            addZNegFace(chunk.opaqueMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            if (!hasProp(chunk.blocks[i][j][k], SEMI_TRANSPARENT)) {
+                                addZNegFace(chunk.opaqueMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            }
+                            else {
+                                addZNegFace(chunk.transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            }
                         }
                         else {
-                            addZNegFace(chunk.transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            if (!hasProp(chunk.blocks[i][j][k], SEMI_TRANSPARENT)) {
+                                addZNegFace(chunk.opaqueNoShadowMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            }
+                            else {
+                                addZNegFace(chunk.transpNoShadowMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            }
                         }
                     }
                 }
                 else if (hasProp(chunk.blocks[i][j][k-1], TRANSPARENT) && (chunk.blocks[i][j][k-1] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE))) {
                     vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 4);
                     if (!hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
-                        addZNegFace(chunk.opaqueMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        if (!hasProp(chunk.blocks[i][j][k], SEMI_TRANSPARENT)) {
+                            addZNegFace(chunk.opaqueMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        }
+                        else {
+                            addZNegFace(chunk.transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        }
                     }
                     else {
-                        addZNegFace(chunk.transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        if (!hasProp(chunk.blocks[i][j][k], SEMI_TRANSPARENT)) {
+                            addZNegFace(chunk.opaqueNoShadowMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        }
+                        else {
+                            addZNegFace(chunk.transpNoShadowMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        }
                     }
                 }
 				//Z POSITIVE FACE
@@ -494,45 +590,87 @@ void updateMesh(chunk& chunk) {
                     if (hasSouthChunk && hasProp(southChunk->blocks[i][j][0], TRANSPARENT) && (southChunk->blocks[i][j][0] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE))) {
                         vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 5);
                         if (!hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
-                            addZPosFace(chunk.opaqueMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
+                            if (!hasProp(chunk.blocks[i][j][k], SEMI_TRANSPARENT)) {
+                                addZPosFace(chunk.opaqueMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
+                            }
+                            else {
+                                addZPosFace(chunk.transpMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
+                            }
                         }
                         else {
-                            addZPosFace(chunk.transpMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
+                            if (!hasProp(chunk.blocks[i][j][k], SEMI_TRANSPARENT)) {
+                                addZPosFace(chunk.opaqueNoShadowMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
+                            }
+                            else {
+                                addZPosFace(chunk.transpNoShadowMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
+                            }
                         }
                     }
                 }
                 else if (hasProp(chunk.blocks[i][j][k+1], TRANSPARENT) && (chunk.blocks[i][j][k+1] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE))) {
                     vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 5);
                     if (!hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
-                        addZPosFace(chunk.opaqueMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
+                        if (!hasProp(chunk.blocks[i][j][k], SEMI_TRANSPARENT)) {
+                            addZPosFace(chunk.opaqueMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
+                        }
+                        else {
+                            addZPosFace(chunk.transpMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
+                        }
                     }
                     else {
-                        addZPosFace(chunk.transpMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
+                        if (!hasProp(chunk.blocks[i][j][k], SEMI_TRANSPARENT)) {
+                            addZPosFace(chunk.opaqueNoShadowMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
+                        }
+                        else {
+                            addZPosFace(chunk.transpNoShadowMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
+                        }
                     }
                 }
             }
         }
     }
 
-    if (chunk.opaqueMeshObj == NULL) {
-        chunk.opaqueMeshObj = setupOpaqueMeshTexture(chunk.opaqueMesh);
-        setMeshTextureFile(chunk.opaqueMeshObj, "sources/textures/all.png");
-		setMeshPosition(chunk.opaqueMeshObj, glm::vec3(chunk.key.x* CHUNKWIDTH, 0, chunk.key.y* CHUNKWIDTH));
-    }
-    else {
-        updateMeshTexture(chunk.opaqueMeshObj, chunk.opaqueMesh);
+    if(!chunk.opaqueMesh.empty()) {
+        if (chunk.opaqueMeshObj == NULL) {
+            chunk.opaqueMeshObj = setupMeshTexture(chunk.opaqueMesh, glm::vec3(chunk.key.x * CHUNKWIDTH, 0, chunk.key.y * CHUNKWIDTH), false, true);
+            setMeshTextureFile(chunk.opaqueMeshObj, "sources/textures/all.png");
+        }else {
+            updateMeshTexture(chunk.opaqueMeshObj, chunk.opaqueMesh);
+        }
         setMeshPosition(chunk.opaqueMeshObj, glm::vec3(chunk.key.x* CHUNKWIDTH, 0, chunk.key.y* CHUNKWIDTH));
     }
+    if (!chunk.opaqueNoShadowMesh.empty()) {
+        if (chunk.opaqueNoShadowMeshObj == NULL) {
+            chunk.opaqueNoShadowMeshObj = setupMeshTexture(chunk.opaqueNoShadowMesh, glm::vec3(chunk.key.x * CHUNKWIDTH, 0, chunk.key.y * CHUNKWIDTH), false, false);
+            setMeshTextureFile(chunk.opaqueNoShadowMeshObj, "sources/textures/all.png");
+        }
+        else {
+            updateMeshTexture(chunk.opaqueNoShadowMeshObj, chunk.opaqueNoShadowMesh);
+        }
+        setMeshPosition(chunk.opaqueNoShadowMeshObj, glm::vec3(chunk.key.x * CHUNKWIDTH, 0, chunk.key.y * CHUNKWIDTH));
+    }
 
-    if (chunk.transpMeshObj == NULL) {
-        chunk.transpMeshObj = setupTranspMeshTexture(chunk.transpMesh);
-        setMeshTextureFile(chunk.transpMeshObj, "sources/textures/all.png");
-        setMeshPosition(chunk.transpMeshObj, glm::vec3(chunk.key.x* CHUNKWIDTH, 0, chunk.key.y* CHUNKWIDTH));
+    if (!chunk.transpMesh.empty()) {
+        if (chunk.transpMeshObj == NULL) {
+            chunk.transpMeshObj = setupMeshTexture(chunk.transpMesh, glm::vec3(chunk.key.x * CHUNKWIDTH, 0, chunk.key.y * CHUNKWIDTH), true, true);
+            setMeshTextureFile(chunk.transpMeshObj, "sources/textures/all.png");
+        }
+        else {
+            updateMeshTexture(chunk.transpMeshObj, chunk.transpMesh);
+        }
+        setMeshPosition(chunk.transpMeshObj, glm::vec3(chunk.key.x * CHUNKWIDTH, 0, chunk.key.y * CHUNKWIDTH));
     }
-    else {
-        updateMeshTexture(chunk.transpMeshObj, chunk.transpMesh);
-        setMeshPosition(chunk.transpMeshObj, glm::vec3(chunk.key.x* CHUNKWIDTH, 0, chunk.key.y* CHUNKWIDTH));
+    if (!chunk.transpNoShadowMesh.empty()) {
+        if (chunk.transpNoShadowMeshObj == NULL) {
+            chunk.transpNoShadowMeshObj = setupMeshTexture(chunk.transpNoShadowMesh, glm::vec3(chunk.key.x * CHUNKWIDTH, 0, chunk.key.y * CHUNKWIDTH), true, false);
+            setMeshTextureFile(chunk.transpNoShadowMeshObj, "sources/textures/all.png");
+        }
+        else {
+            updateMeshTexture(chunk.transpNoShadowMeshObj, chunk.transpNoShadowMesh);
+        }
+        setMeshPosition(chunk.transpNoShadowMeshObj, glm::vec3(chunk.key.x * CHUNKWIDTH, 0, chunk.key.y * CHUNKWIDTH));
     }
+    
 }
 
 
@@ -611,6 +749,7 @@ void processChunkQueues() {
                 chunk.transpMeshObj = nullptr;
             }
             chunk.transpMesh.clear();
+
             chunk.transpMesh.shrink_to_fit();
 
             chunk.isActive = false;

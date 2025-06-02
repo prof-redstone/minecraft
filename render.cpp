@@ -12,12 +12,6 @@
 #include "render.hpp"
 
 std::vector<std::string> SkyBoxFaces{
-    /*"sources/skybox/right.jpg",
-    "sources/skybox/left.jpg",
-    "sources/skybox/top.jpg",
-    "sources/skybox/bottom.jpg",
-    "sources/skybox/front.jpg",
-    "sources/skybox/back.jpg"*/
 
     "sources/skybox/px.jpg",
     "sources/skybox/nx.jpg",
@@ -56,8 +50,11 @@ static unsigned int shaderProgramDepth;
 static unsigned int VAO_SKY;
 static unsigned int VAO_LIGHT;
 static unsigned int cubemapTexture;
+
 static std::vector<Mesh*> opaqueMeshList;
 static std::vector<Mesh*> transpMeshList;
+static std::vector<Mesh*> opaqueNoShadowMeshList;
+static std::vector<Mesh*> transpNoShadowMeshList;
 static std::vector<Light*> lightList;
 
 static glm::vec3 blockTargetPos = glm::vec3(0.0,0.0,0.0);
@@ -111,6 +108,29 @@ void terminateRender() {
     }
     transpMeshList.clear();
 
+    for (Mesh* mesh : opaqueNoShadowMeshList) {
+        if (mesh != nullptr) {
+            glDeleteVertexArrays(1, &mesh->VAO);
+            glDeleteBuffers(1, &mesh->VBO);
+            GLuint vboNorm = 0;
+            glDeleteBuffers(1, &vboNorm);
+            delete mesh;
+            mesh = nullptr;
+        }
+    }
+    opaqueNoShadowMeshList.clear();
+    for (Mesh* mesh : transpNoShadowMeshList) {
+        if (mesh != nullptr) {
+            glDeleteVertexArrays(1, &mesh->VAO);
+            glDeleteBuffers(1, &mesh->VBO);
+            GLuint vboNorm = 0;
+            glDeleteBuffers(1, &vboNorm);
+            delete mesh;
+            mesh = nullptr;
+        }
+    }
+    transpNoShadowMeshList.clear();
+
     glfwTerminate();
 }
 
@@ -151,7 +171,7 @@ void setMeshTextureFile(Mesh* mesh, const char* path) {
 
 
 
-Mesh* setupOpaqueMeshTexture(std::vector<float> vertices, const glm::vec3& position) {
+Mesh* setupMeshTexture(std::vector<float> vertices, const glm::vec3& position, bool transp, bool shadow) {
     Mesh* mesh = new Mesh();
     mesh->vertices = vertices;
     glGenVertexArrays(1, &mesh->VAO);
@@ -184,44 +204,10 @@ Mesh* setupOpaqueMeshTexture(std::vector<float> vertices, const glm::vec3& posit
     mesh->shininess = 32;
     mesh->ambianteLightMult = 0.8;
     mesh->enableTexture = true;
-    opaqueMeshList.push_back(mesh);
-    return mesh;
-}
-
-Mesh* setupTranspMeshTexture(std::vector<float> vertices, const glm::vec3& position) {
-    Mesh* mesh = new Mesh();
-    mesh->vertices = vertices;
-    glGenVertexArrays(1, &mesh->VAO);
-    glBindVertexArray(mesh->VAO);
-
-    glGenBuffers(1, &mesh->VBO);//generate VBO
-    glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);//VBO actif
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(0 * sizeof(float)));
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(2);
-
-    mesh->normales = computeNormalsTexture(vertices);
-
-    glGenBuffers(1, &mesh->VBONorm);//generate VBO
-    glBindBuffer(GL_ARRAY_BUFFER, mesh->VBONorm);//VBO actif
-    glBufferData(GL_ARRAY_BUFFER, mesh->normales.size() * sizeof(float), mesh->normales.data(), GL_STATIC_DRAW);
-
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)(0 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    glBindVertexArray(0);
-
-
-    mesh->model = glm::mat4(glm::translate(glm::mat4(1.0f), position));
-    mesh->color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-    mesh->shininess = 32;
-    mesh->ambianteLightMult = 0.8;
-    mesh->enableTexture = true;
-    transpMeshList.push_back(mesh);
+    if (!transp && shadow) opaqueMeshList.push_back(mesh);
+    if (transp && shadow) transpMeshList.push_back(mesh);
+    if (!transp && !shadow) opaqueNoShadowMeshList.push_back(mesh);
+	if (transp && !shadow) transpNoShadowMeshList.push_back(mesh);
     return mesh;
 }
 
@@ -237,6 +223,14 @@ void deleteMesh(Mesh* mesh) {
     it = std::find(transpMeshList.begin(), transpMeshList.end(), mesh);
     if (it != transpMeshList.end()) {
         transpMeshList.erase(it);
+    }
+    it = std::find(opaqueNoShadowMeshList.begin(), opaqueNoShadowMeshList.end(), mesh);
+    if (it != opaqueNoShadowMeshList.end()) {
+        opaqueNoShadowMeshList.erase(it);
+    }
+    it = std::find(transpNoShadowMeshList.begin(), transpNoShadowMeshList.end(), mesh);
+    if (it != transpNoShadowMeshList.end()) {
+        transpNoShadowMeshList.erase(it);
     }
 
     glDeleteVertexArrays(1, &(mesh->VAO));
@@ -271,19 +265,7 @@ void updateMeshTexture(Mesh* mesh, std::vector<float> vertices) {
     glBindVertexArray(0);
 }
 
-void updateMesh(Mesh* mesh, std::vector<float> vertices) {
-    mesh->vertices = vertices;
 
-    glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
-
-    mesh->normales = computeNormals(vertices);
-
-    glBindBuffer(GL_ARRAY_BUFFER, mesh->VBONorm);
-    glBufferData(GL_ARRAY_BUFFER, mesh->normales.size() * sizeof(float), mesh->normales.data(), GL_STATIC_DRAW);
-
-    glBindVertexArray(0);
-}
 
 void setMeshPosition(Mesh* mesh,const glm::vec3& position) {
     if (mesh == nullptr) return;
@@ -449,7 +431,7 @@ void renderScene() {
             for (int i = 0; i < transpMeshList.size(); i++) {
                 glUniformMatrix4fv(glGetUniformLocation(shaderProgramDepth, "model"), 1, GL_FALSE, glm::value_ptr(glm::translate((*transpMeshList[i]).model, -camera.Position)));
                 glBindVertexArray((*transpMeshList[i]).VAO);
-                //glDrawArrays(GL_TRIANGLES, 0, (*transpMeshList[i]).vertices.size() / 3);
+                glDrawArrays(GL_TRIANGLES, 0, (*transpMeshList[i]).vertices.size() / 3);
             }
         }
     }
@@ -526,9 +508,24 @@ void renderScene() {
         glBindVertexArray((*opaqueMeshList[i]).VAO);
         glDrawArrays(GL_TRIANGLES, 0, (*opaqueMeshList[i]).vertices.size() / 3);
     }
+    for (int i = 0; i < opaqueNoShadowMeshList.size(); i++) {
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(glm::translate((*opaqueNoShadowMeshList[i]).model, -camera.Position)));
+        glUniform4fv(glGetUniformLocation(shaderProgram, "mat.color"), 1, glm::value_ptr((*opaqueNoShadowMeshList[i]).color));
+        glUniform1i(glGetUniformLocation(shaderProgram, "mat.shininess"), (*opaqueNoShadowMeshList[i]).shininess);
+        glUniform1f(glGetUniformLocation(shaderProgram, "mat.ambianteLightMult"), (*opaqueNoShadowMeshList[i]).ambianteLightMult);
+        glUniform1i(glGetUniformLocation(shaderProgram, "mat.enableTexture"), 0);
+        if ((*opaqueNoShadowMeshList[i]).enableTexture) {
+            glActiveTexture(GL_TEXTURE0 + TextureIndex);
+            glBindTexture(GL_TEXTURE_2D, (*opaqueNoShadowMeshList[i]).texture);
+            glUniform1i(glGetUniformLocation(shaderProgram, "mat.text"), TextureIndex);
+            glUniform1i(glGetUniformLocation(shaderProgram, "mat.enableTexture"), 1);
+        }
+        glBindVertexArray((*opaqueNoShadowMeshList[i]).VAO);
+        glDrawArrays(GL_TRIANGLES, 0, (*opaqueNoShadowMeshList[i]).vertices.size() / 3);
+    }
 
 
-    //glDepthMask(GL_FALSE);
+    glDepthMask(GL_FALSE);
     for (int i = 0; i < transpMeshList.size(); i++) {
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(glm::translate((*transpMeshList[i]).model, -camera.Position)));
         glUniform4fv(glGetUniformLocation(shaderProgram, "mat.color"), 1, glm::value_ptr((*transpMeshList[i]).color));
@@ -544,7 +541,22 @@ void renderScene() {
         glBindVertexArray((*transpMeshList[i]).VAO);
         glDrawArrays(GL_TRIANGLES, 0, (*transpMeshList[i]).vertices.size() / 3);
     }
-    //glDepthMask(GL_TRUE);
+    for (int i = 0; i < transpNoShadowMeshList.size(); i++) {
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(glm::translate((*transpNoShadowMeshList[i]).model, -camera.Position)));
+        glUniform4fv(glGetUniformLocation(shaderProgram, "mat.color"), 1, glm::value_ptr((*transpNoShadowMeshList[i]).color));
+        glUniform1i(glGetUniformLocation(shaderProgram, "mat.shininess"), (*transpNoShadowMeshList[i]).shininess);
+        glUniform1f(glGetUniformLocation(shaderProgram, "mat.ambianteLightMult"), (*transpNoShadowMeshList[i]).ambianteLightMult);
+        glUniform1i(glGetUniformLocation(shaderProgram, "mat.enableTexture"), 0);
+        if ((*transpNoShadowMeshList[i]).enableTexture) {
+            glActiveTexture(GL_TEXTURE0 + TextureIndex);
+            glBindTexture(GL_TEXTURE_2D, (*transpNoShadowMeshList[i]).texture);
+            glUniform1i(glGetUniformLocation(shaderProgram, "mat.text"), TextureIndex);
+            glUniform1i(glGetUniformLocation(shaderProgram, "mat.enableTexture"), 1);
+        }
+        glBindVertexArray((*transpNoShadowMeshList[i]).VAO);
+        glDrawArrays(GL_TRIANGLES, 0, (*transpNoShadowMeshList[i]).vertices.size() / 3);
+    }
+    glDepthMask(GL_TRUE);
 
     //---BOX LIGHT---
     glUseProgram(shaderLight);
