@@ -31,7 +31,9 @@ enum BP {//block properties
 	RENDER_INSIDE = 1 << 2, //water
 	PLANT = 1 << 3, //move with wind
 	DONT_CAST_SHADOW = 1 << 4, //glass, water
-	SEMI_TRANSPARENT = 1 << 5 //semi-transparent blocks like water
+	SEMI_TRANSPARENT = 1 << 5, //semi-transparent blocks like water
+	CROSS_SHAPE = 1 << 6, //blocks that have a cross shape like dandelion, poppy, short grass
+
 };
 
 const std::uint32_t BLOCK_PROP[] = {
@@ -45,17 +47,17 @@ const std::uint32_t BLOCK_PROP[] = {
     SOLID,                            // diamond 
     SOLID,                            // oka_plank
     SOLID,                            // oka_log 
-    TRANSPARENT|RENDER_INSIDE,        // oka_leaves
+    TRANSPARENT|RENDER_INSIDE|PLANT,  // oka_leaves
     SOLID,                            // cactus 
     SOLID,                            // spruce_log
-    TRANSPARENT|RENDER_INSIDE,        // spruce_leaves
+    TRANSPARENT|RENDER_INSIDE | PLANT,// spruce_leaves
     TRANSPARENT|DONT_CAST_SHADOW|SEMI_TRANSPARENT,// water
-    PLANT|TRANSPARENT|DONT_CAST_SHADOW,// short grass
-    PLANT|TRANSPARENT|DONT_CAST_SHADOW,//poppy
-    PLANT | TRANSPARENT | DONT_CAST_SHADOW,//dandelion
-    PLANT | TRANSPARENT | DONT_CAST_SHADOW,//dead bush
-    PLANT | TRANSPARENT | DONT_CAST_SHADOW,//sweet berry
-    PLANT | TRANSPARENT | DONT_CAST_SHADOW,//kelp
+    PLANT|TRANSPARENT|DONT_CAST_SHADOW | CROSS_SHAPE,// short grass
+    PLANT|TRANSPARENT|DONT_CAST_SHADOW | CROSS_SHAPE,//poppy
+    PLANT | TRANSPARENT | DONT_CAST_SHADOW| CROSS_SHAPE,//dandelion
+    PLANT | TRANSPARENT | DONT_CAST_SHADOW | CROSS_SHAPE,//dead bush
+    PLANT | TRANSPARENT | DONT_CAST_SHADOW | CROSS_SHAPE,//sweet berry
+    PLANT | TRANSPARENT | DONT_CAST_SHADOW | CROSS_SHAPE,//kelp
     SOLID,                            // gravel 
 
 };

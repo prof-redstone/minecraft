@@ -12,12 +12,12 @@
 #include "render.hpp"
 #include "structure.h"
 
-#define CHUNKWIDTH 20
+#define CHUNKWIDTH 30
 #define CHUNKHEIGHT 120
-#define RENDER_DISTANCE 15
+#define RENDER_DISTANCE 10
 
 
-int maxChunksPerFrame = 3;
+int maxChunksPerFrame = 2;
 using namespace std;
 
 int textureMapWidth = 8;
@@ -190,10 +190,12 @@ typedef struct chunk {
     std::vector<float> opaqueNoShadowMesh;
     std::vector<float> transpMesh;
     std::vector<float> transpNoShadowMesh;
+    std::vector<float> plantMesh;
     Mesh* opaqueMeshObj = nullptr;
     Mesh* transpMeshObj = nullptr;
     Mesh* opaqueNoShadowMeshObj = nullptr;
     Mesh* transpNoShadowMeshObj = nullptr;
+    Mesh* plantMeshObj = nullptr;
     bool isActive = false;
 } Chunk;
 
@@ -444,6 +446,8 @@ void updateMesh(chunk& chunk) {
     chunk.opaqueNoShadowMesh.clear();
 	chunk.transpMesh.clear();
     chunk.transpNoShadowMesh.clear();
+	chunk.plantMesh.clear();
+
 
     ChunkKey westKey = { chunk.key.x - 1, chunk.key.y };
     ChunkKey eastKey = { chunk.key.x + 1, chunk.key.y };
@@ -489,9 +493,26 @@ void updateMesh(chunk& chunk) {
             for (int k = 0; k < CHUNKWIDTH; ++k) {
                 if (chunk.blocks[i][j][k] == air) continue;
                 if (hasProp(chunk.blocks[i][j][k], PLANT)) {
-                    vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 0);
-                    addPlantFace(chunk.opaqueNoShadowMesh, i+1, j, k, faceUV[0], faceUV[1], faceUV[2]);
-                    continue;
+                    if (hasProp(chunk.blocks[i][j][k], CROSS_SHAPE)) {
+                        vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 0);
+                        addPlantFace(chunk.plantMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        continue;
+                    }
+                    else {
+                        vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 0);
+                        addXNegFace(chunk.plantMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        faceUV = getFaceUV(chunk.blocks[i][j][k], 1);
+                        addXPosFace(chunk.plantMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        faceUV = getFaceUV(chunk.blocks[i][j][k], 2);
+                        addBottomFace(chunk.plantMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        faceUV = getFaceUV(chunk.blocks[i][j][k], 3);
+                        addTopFace(chunk.plantMesh, i, j + 1, k, faceUV[0], faceUV[1], faceUV[2]);
+                        faceUV = getFaceUV(chunk.blocks[i][j][k], 4);
+                        addZNegFace(chunk.plantMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                        faceUV = getFaceUV(chunk.blocks[i][j][k], 5);
+                        addZPosFace(chunk.plantMesh, i, j, k+1, faceUV[0], faceUV[1], faceUV[2]);
+						continue;
+                    }
                 }
 
 				//X POSITIVE FACE
@@ -735,7 +756,7 @@ void updateMesh(chunk& chunk) {
 
     if(!chunk.opaqueMesh.empty()) {
         if (chunk.opaqueMeshObj == NULL) {
-            chunk.opaqueMeshObj = setupMeshTexture(chunk.opaqueMesh, glm::vec3(chunk.key.x * CHUNKWIDTH, 0, chunk.key.y * CHUNKWIDTH), false, true);
+            chunk.opaqueMeshObj = setupMeshTexture(chunk.opaqueMesh, glm::vec3(chunk.key.x * CHUNKWIDTH, 0, chunk.key.y * CHUNKWIDTH), false, true, false);
             setMeshTextureFile(chunk.opaqueMeshObj, "sources/textures/all.png");
         }else {
             updateMeshTexture(chunk.opaqueMeshObj, chunk.opaqueMesh);
@@ -744,7 +765,7 @@ void updateMesh(chunk& chunk) {
     }
     if (!chunk.opaqueNoShadowMesh.empty()) {
         if (chunk.opaqueNoShadowMeshObj == NULL) {
-            chunk.opaqueNoShadowMeshObj = setupMeshTexture(chunk.opaqueNoShadowMesh, glm::vec3(chunk.key.x * CHUNKWIDTH, 0, chunk.key.y * CHUNKWIDTH), false, false);
+            chunk.opaqueNoShadowMeshObj = setupMeshTexture(chunk.opaqueNoShadowMesh, glm::vec3(chunk.key.x * CHUNKWIDTH, 0, chunk.key.y * CHUNKWIDTH), false, false, false);
             setMeshTextureFile(chunk.opaqueNoShadowMeshObj, "sources/textures/all.png");
         }
         else {
@@ -755,7 +776,7 @@ void updateMesh(chunk& chunk) {
 
     if (!chunk.transpMesh.empty()) {
         if (chunk.transpMeshObj == NULL) {
-            chunk.transpMeshObj = setupMeshTexture(chunk.transpMesh, glm::vec3(chunk.key.x * CHUNKWIDTH, 0, chunk.key.y * CHUNKWIDTH), true, true);
+            chunk.transpMeshObj = setupMeshTexture(chunk.transpMesh, glm::vec3(chunk.key.x * CHUNKWIDTH, 0, chunk.key.y * CHUNKWIDTH), true, true, false);
             setMeshTextureFile(chunk.transpMeshObj, "sources/textures/all.png");
         }
         else {
@@ -765,13 +786,24 @@ void updateMesh(chunk& chunk) {
     }
     if (!chunk.transpNoShadowMesh.empty()) {
         if (chunk.transpNoShadowMeshObj == NULL) {
-            chunk.transpNoShadowMeshObj = setupMeshTexture(chunk.transpNoShadowMesh, glm::vec3(chunk.key.x * CHUNKWIDTH, 0, chunk.key.y * CHUNKWIDTH), true, false);
+            chunk.transpNoShadowMeshObj = setupMeshTexture(chunk.transpNoShadowMesh, glm::vec3(chunk.key.x * CHUNKWIDTH, 0, chunk.key.y * CHUNKWIDTH), true, false, false);
             setMeshTextureFile(chunk.transpNoShadowMeshObj, "sources/textures/all.png");
         }
         else {
             updateMeshTexture(chunk.transpNoShadowMeshObj, chunk.transpNoShadowMesh);
         }
         setMeshPosition(chunk.transpNoShadowMeshObj, glm::vec3(chunk.key.x * CHUNKWIDTH, 0, chunk.key.y * CHUNKWIDTH));
+    }
+
+    if (!chunk.plantMesh.empty()) {
+        if (chunk.plantMeshObj == NULL) {
+            chunk.plantMeshObj = setupMeshTexture(chunk.plantMesh, glm::vec3(chunk.key.x * CHUNKWIDTH, 0, chunk.key.y * CHUNKWIDTH), false, true, true);
+            setMeshTextureFile(chunk.plantMeshObj, "sources/textures/all.png");
+        }
+        else {
+            updateMeshTexture(chunk.plantMeshObj, chunk.plantMesh);
+        }
+        setMeshPosition(chunk.plantMeshObj, glm::vec3(chunk.key.x * CHUNKWIDTH, 0, chunk.key.y * CHUNKWIDTH));
     }
     
 }
@@ -867,6 +899,13 @@ void processChunkQueues() {
             }
             chunk.transpNoShadowMesh.clear();
             chunk.transpNoShadowMesh.shrink_to_fit();
+
+            if (chunk.plantMeshObj != nullptr) {
+                deleteMesh(chunk.plantMeshObj);
+                chunk.plantMeshObj = nullptr;
+            }
+            chunk.plantMesh.clear();
+            chunk.plantMesh.shrink_to_fit();
 
             chunk.isActive = false;
 
@@ -1307,7 +1346,7 @@ int main() {
 
     Light* sun = createLight(DIRECTIONAL, true);
     setLightColor(sun, glm::vec3(1.0, 1.0, 1.0));
-    setLightIntensity(sun, 0.6);
+    setLightIntensity(sun, 0.60);
     setLightDirection(sun, glm::vec3(-3.8f, 7.5f, -5.0f));
 
     Light* skyLight = createLight(DIRECTIONAL, false);

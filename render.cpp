@@ -55,6 +55,8 @@ static std::vector<Mesh*> opaqueMeshList;
 static std::vector<Mesh*> transpMeshList;
 static std::vector<Mesh*> opaqueNoShadowMeshList;
 static std::vector<Mesh*> transpNoShadowMeshList;
+static std::vector<Mesh*> plantMeshList;
+
 static std::vector<Light*> lightList;
 
 static glm::vec3 blockTargetPos = glm::vec3(0.0,0.0,0.0);
@@ -171,7 +173,7 @@ void setMeshTextureFile(Mesh* mesh, const char* path) {
 
 
 
-Mesh* setupMeshTexture(std::vector<float> vertices, const glm::vec3& position, bool transp, bool shadow) {
+Mesh* setupMeshTexture(std::vector<float> vertices, const glm::vec3& position, bool transp, bool shadow, bool plant) {
     Mesh* mesh = new Mesh();
     mesh->vertices = vertices;
     glGenVertexArrays(1, &mesh->VAO);
@@ -204,10 +206,11 @@ Mesh* setupMeshTexture(std::vector<float> vertices, const glm::vec3& position, b
     mesh->shininess = 32;
     mesh->ambianteLightMult = 0.8;
     mesh->enableTexture = true;
-    if (!transp && shadow) opaqueMeshList.push_back(mesh);
-    if (transp && shadow) transpMeshList.push_back(mesh);
-    if (!transp && !shadow) opaqueNoShadowMeshList.push_back(mesh);
-	if (transp && !shadow) transpNoShadowMeshList.push_back(mesh);
+	if (plant) plantMeshList.push_back(mesh);
+    else if (!transp && shadow) opaqueMeshList.push_back(mesh);
+    else if (transp && shadow) transpMeshList.push_back(mesh);
+    else if (!transp && !shadow) opaqueNoShadowMeshList.push_back(mesh);
+    else if (transp && !shadow) transpNoShadowMeshList.push_back(mesh);
     return mesh;
 }
 
@@ -231,6 +234,10 @@ void deleteMesh(Mesh* mesh) {
     it = std::find(transpNoShadowMeshList.begin(), transpNoShadowMeshList.end(), mesh);
     if (it != transpNoShadowMeshList.end()) {
         transpNoShadowMeshList.erase(it);
+    }
+    it = std::find(plantMeshList.begin(), plantMeshList.end(), mesh);
+    if (it != plantMeshList.end()) {
+        plantMeshList.erase(it);
     }
 
     glDeleteVertexArrays(1, &(mesh->VAO));
@@ -422,6 +429,7 @@ void renderScene() {
             glViewport(0, 0, (*lightList[i]).shadowWidth, (*lightList[i]).shadowHeight);
             glBindFramebuffer(GL_FRAMEBUFFER, (*lightList[i]).depthMapFBO);
             glClear(GL_DEPTH_BUFFER_BIT);
+            glUniform1i(glGetUniformLocation(shaderProgramDepth, "enableTexture"), 0);
 
             for (int i = 0; i < opaqueMeshList.size(); i++) {
                 glUniformMatrix4fv(glGetUniformLocation(shaderProgramDepth, "model"), 1, GL_FALSE, glm::value_ptr(glm::translate((*opaqueMeshList[i]).model, -camera.Position)));
@@ -432,6 +440,16 @@ void renderScene() {
                 glUniformMatrix4fv(glGetUniformLocation(shaderProgramDepth, "model"), 1, GL_FALSE, glm::value_ptr(glm::translate((*transpMeshList[i]).model, -camera.Position)));
                 glBindVertexArray((*transpMeshList[i]).VAO);
                 glDrawArrays(GL_TRIANGLES, 0, (*transpMeshList[i]).vertices.size() / 3);
+            }
+            for (int i = 0; i < plantMeshList.size(); i++) {
+                glActiveTexture(GL_TEXTURE0 + 0);
+                glBindTexture(GL_TEXTURE_2D, (*plantMeshList[i]).texture);
+                glUniform1i(glGetUniformLocation(shaderProgramDepth, "text"), 0);
+                glUniform1i(glGetUniformLocation(shaderProgramDepth, "enableTexture"), 1);
+
+                glUniformMatrix4fv(glGetUniformLocation(shaderProgramDepth, "model"), 1, GL_FALSE, glm::value_ptr(glm::translate((*plantMeshList[i]).model, -camera.Position)));
+                glBindVertexArray((*plantMeshList[i]).VAO);
+                glDrawArrays(GL_TRIANGLES, 0, (*plantMeshList[i]).vertices.size() / 3);
             }
         }
     }
@@ -505,6 +523,7 @@ void renderScene() {
             glUniform1i(glGetUniformLocation(shaderProgram, "mat.text"), TextureIndex);
             glUniform1i(glGetUniformLocation(shaderProgram, "mat.enableTexture"), 1);
         }
+        glUniform1i(glGetUniformLocation(shaderProgram, "enableWind"), 0);
         glBindVertexArray((*opaqueMeshList[i]).VAO);
         glDrawArrays(GL_TRIANGLES, 0, (*opaqueMeshList[i]).vertices.size() / 3);
     }
@@ -520,8 +539,29 @@ void renderScene() {
             glUniform1i(glGetUniformLocation(shaderProgram, "mat.text"), TextureIndex);
             glUniform1i(glGetUniformLocation(shaderProgram, "mat.enableTexture"), 1);
         }
+        glUniform1i(glGetUniformLocation(shaderProgram, "enableWind"), 0);
         glBindVertexArray((*opaqueNoShadowMeshList[i]).VAO);
         glDrawArrays(GL_TRIANGLES, 0, (*opaqueNoShadowMeshList[i]).vertices.size() / 3);
+    }
+    for (int i = 0; i < plantMeshList.size(); i++) {
+        glUniform1i(glGetUniformLocation(shaderProgram, "enableWind"), 1);
+        glUniform1f(glGetUniformLocation(shaderProgram, "time"), glfwGetTime());
+        glUniform1f(glGetUniformLocation(shaderProgram, "windStrength"), 0.3f);
+        glUniform3f(glGetUniformLocation(shaderProgram, "windDirection"), 1.0f, 0.0f, 0.5f);
+
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(glm::translate((*plantMeshList[i]).model, -camera.Position)));
+        glUniform4fv(glGetUniformLocation(shaderProgram, "mat.color"), 1, glm::value_ptr((*plantMeshList[i]).color));
+        glUniform1i(glGetUniformLocation(shaderProgram, "mat.shininess"), (*plantMeshList[i]).shininess);
+        glUniform1f(glGetUniformLocation(shaderProgram, "mat.ambianteLightMult"), (*plantMeshList[i]).ambianteLightMult);
+        glUniform1i(glGetUniformLocation(shaderProgram, "mat.enableTexture"), 0);
+        if ((*plantMeshList[i]).enableTexture) {
+            glActiveTexture(GL_TEXTURE0 + TextureIndex);
+            glBindTexture(GL_TEXTURE_2D, (*plantMeshList[i]).texture);
+            glUniform1i(glGetUniformLocation(shaderProgram, "mat.text"), TextureIndex);
+            glUniform1i(glGetUniformLocation(shaderProgram, "mat.enableTexture"), 1);
+        }
+        glBindVertexArray((*plantMeshList[i]).VAO);
+        glDrawArrays(GL_TRIANGLES, 0, (*plantMeshList[i]).vertices.size() / 3);
     }
 
 
@@ -538,6 +578,7 @@ void renderScene() {
             glUniform1i(glGetUniformLocation(shaderProgram, "mat.text"), TextureIndex);
             glUniform1i(glGetUniformLocation(shaderProgram, "mat.enableTexture"), 1);
         }
+        glUniform1i(glGetUniformLocation(shaderProgram, "enableWind"), 0);
         glBindVertexArray((*transpMeshList[i]).VAO);
         glDrawArrays(GL_TRIANGLES, 0, (*transpMeshList[i]).vertices.size() / 3);
     }
@@ -553,6 +594,7 @@ void renderScene() {
             glUniform1i(glGetUniformLocation(shaderProgram, "mat.text"), TextureIndex);
             glUniform1i(glGetUniformLocation(shaderProgram, "mat.enableTexture"), 1);
         }
+        glUniform1i(glGetUniformLocation(shaderProgram, "enableWind"), 0);
         glBindVertexArray((*transpNoShadowMeshList[i]).VAO);
         glDrawArrays(GL_TRIANGLES, 0, (*transpNoShadowMeshList[i]).vertices.size() / 3);
     }
@@ -833,7 +875,7 @@ int InitGLFW(GLFWwindow*& window, const char * nom) {
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); 
 
     window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, nom, NULL, NULL);
     if (!window) {
