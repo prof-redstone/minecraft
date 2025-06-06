@@ -329,10 +329,10 @@ Light* createLight(
     else {
         light->near_plane = -80.0;
         light->far_plane = 50.0;
-        light->shadowWidth = 2048;
-        light->shadowHeight = 2048;
-        light->PCFSize = 2;
-        light->width = 30.0;
+        light->shadowWidth = 3000;
+        light->shadowHeight = 3000;
+        light->PCFSize = 3;
+        light->width = 35.0;
     }
 
     if (light->castshadow) {
@@ -628,10 +628,25 @@ void renderScene() {
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
 
-    //cube pointeur GUI
-    glm::vec3 boxPos = glm::vec3(0.0, 0.0, 0.0) + camera.Front * glm::float32(0.1);
+    //color view
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glDepthMask(GL_FALSE);
+    glm::vec3 boxPos = glm::vec3(0.0, 0.0, 0.0) + camera.Front * glm::float32(0.15);
     glm::mat4 billboardMatrix = glm::inverse(glm::lookAt(boxPos, glm::vec3(0.0, 0.0, 0.0), camera.Up));
-    glm::mat4 modelMatrix = billboardMatrix * glm::scale(glm::mat4(1.0f), glm::vec3(0.0007f));
+    glm::mat4 modelMatrix = billboardMatrix * glm::scale(glm::mat4(1.0f), glm::vec3(0.1f));
+
+    glUniformMatrix4fv(glGetUniformLocation(shaderLight, "model"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(shaderLight, "view"), 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(glGetUniformLocation(shaderLight, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+    glUniform4fv(glGetUniformLocation(shaderLight, "color"), 1, glm::value_ptr(camera.colorOverlay));
+    glBindVertexArray(VAO_LIGHT);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+
+    //cube pointeur GUI
+    boxPos = glm::vec3(0.0, 0.0, 0.0) + camera.Front * glm::float32(0.1);
+    billboardMatrix = glm::inverse(glm::lookAt(boxPos, glm::vec3(0.0, 0.0, 0.0), camera.Up));
+    modelMatrix = billboardMatrix * glm::scale(glm::mat4(1.0f), glm::vec3(0.0007f));
 
     glUniformMatrix4fv(glGetUniformLocation(shaderLight, "model"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
     glUniformMatrix4fv(glGetUniformLocation(shaderLight, "view"), 1, GL_FALSE, glm::value_ptr(view));
@@ -639,6 +654,7 @@ void renderScene() {
     glUniform4fv(glGetUniformLocation(shaderLight, "color"), 1, glm::value_ptr(glm::vec4(1.0, 1.0, 1.0, 1.0f)));
     glBindVertexArray(VAO_LIGHT);
     glDrawArrays(GL_TRIANGLES, 0, 36);
+    glDepthMask(GL_TRUE);
 
     glfwSwapBuffers(window);
     glfwPollEvents();
@@ -652,7 +668,7 @@ glm::mat4 getLightSpaceMatrix(Light* l) {
 
     if (l->type == DIRECTIONAL) {
         lightProjection = glm::ortho(-l->width, l->width, -l->width, l->width, l->near_plane, l->far_plane);
-        lightView = glm::lookAt(glm::vec3(0.0,0.0,0.0), glm::vec3(0.0, 0.0, 0.0) - l->direction, glm::vec3(0.0f, 1.0f, 0.0f));
+        lightView = glm::lookAt(-glm::fract(camera.Position*2.0f) / 2.0f, -glm::fract(camera.Position * 2.0f)/2.0f - l->direction, glm::vec3(0.0f, 1.0f, 0.0f));
     }
     else {
         lightProjection = glm::perspective(l->fov, l->aspectRatio, l->near_plane, l->far_plane);

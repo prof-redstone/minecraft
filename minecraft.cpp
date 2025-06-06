@@ -1039,7 +1039,7 @@ void raycastDDA(glm::vec3 start, glm::vec3 direction_, float maxDistance = 7.0f)
             signed char blockType = chunkIt->second.blocks[localX][blockPos.y][localZ];
 
             
-            if (blockType != air) {
+            if (blockType != air && blockType != water) {
                 hitBlock = true;
                 solidBlockPos = blockPos;
                 airBlockPos = lastAirPos;
@@ -1177,7 +1177,7 @@ void processKey() {
         flyMode = true; 
     }
     if (camera.walkPressed) {
-        camera.MovementSpeed = 7.0f;
+        camera.MovementSpeed = 6.0f;
         flyMode = false;
     }
 
@@ -1338,6 +1338,28 @@ void processKey() {
     }
 }
 
+void setAtmosphere() {
+    int chunkX = static_cast<int>(floor((float)camera.Position.x / CHUNKWIDTH));
+    int chunkZ = static_cast<int>(floor((float)camera.Position.z / CHUNKWIDTH));
+    ChunkKey chunkKey = { chunkX, chunkZ };
+
+    auto chunkIt = chunks.find(chunkKey);
+    if (chunkIt != chunks.end() && chunkIt->second.isActive) {
+        int localX = camera.Position.x - chunkX * CHUNKWIDTH;
+        int localZ = camera.Position.z - chunkZ * CHUNKWIDTH;
+		int blockY = static_cast<int>(floor(camera.Position.y));
+        if (blockY < 0) return;
+        if (blockY >= CHUNKHEIGHT-1) return;
+        signed char blockType = chunkIt->second.blocks[localX][blockY][localZ];
+        if (blockType == water) {
+			camera.colorOverlay = glm::vec4(0.0f, 0.0f, 1.0f, 0.2f);
+        }
+        else {
+            camera.colorOverlay = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+        }
+    }
+}
+
 int main() {
     SetupRender("Minecraft", &camera);
     
@@ -1368,6 +1390,7 @@ int main() {
         raycastDDA(camera.Position, camera.Front);
         processKey();
         processClick();
+		setAtmosphere();
         
 
         renderScene();

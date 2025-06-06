@@ -54,6 +54,10 @@ float ShadowCalculation(vec4 fragPosLightSpace, sampler2D shadowMap, vec3 lightD
     float bias = max(0.001 * (1.0 - dot(fs_in.Normal, lightDir)), 0.002);
     float shadow = 0.0;
     vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+    if(length(fs_in.FragPos) < 10) PCFSize =3;
+    else if(length(fs_in.FragPos) < 20) PCFSize =2;
+    else if(length(fs_in.FragPos) < 30) PCFSize =1;
+	else PCFSize = 0;
     for (int x = -PCFSize; x <= PCFSize; ++x) {
         for (int y = -PCFSize; y <= PCFSize; ++y) {
             float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
