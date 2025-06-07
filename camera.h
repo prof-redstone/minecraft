@@ -40,6 +40,7 @@ public:
     float MouseSensitivity;
     float Zoom;
     float Yspeed;//for falling
+	int renderDistance = 10; // distance to render chunks
 
     bool leftMousePressed = false;
     bool rightMousePressed = false;

@@ -14,8 +14,7 @@
 
 #define CHUNKWIDTH 30
 #define CHUNKHEIGHT 120
-#define RENDER_DISTANCE 10
-
+//#define RENDER_DISTANCE 10 camera.renderDistance;
 
 int maxChunksPerFrame = 2;
 using namespace std;
@@ -240,7 +239,8 @@ double blockDensity(int i, int j, int k, int seed) {
 }
 
 bool asATree(int x, int y , int seed) {
-    if ((x + y) % 4 != 0) return false;
+    if ((x + y) % 3 != 0) return false;
+    if (x % 2 == 0 && y % 2 == 0) return false;
     double proba = db::perlin((double)x / 200.0, (double)y / 200.0, (double)(100 * seed))+1.0;
     double density = 0.07;
     if (proba < 0.7) density = 0.003;
@@ -374,8 +374,8 @@ void initChunk(chunk& chunk, int x, int y) {
         }
     }
     //tree
-    for (int i = -2; i < CHUNKWIDTH + 2; ++i) {
-        for (int k = -2; k < CHUNKWIDTH+2; ++k) {
+    for (int i = -3; i < CHUNKWIDTH + 3; ++i) {
+        for (int k = -3; k < CHUNKWIDTH+3; ++k) {
             if (asATree(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed)) {
                 int h = 0;
                 if (i < 0 || k < 0 || i >= CHUNKWIDTH || k >= CHUNKWIDTH) {
@@ -393,12 +393,33 @@ void initChunk(chunk& chunk, int x, int y) {
                 }
 
                 if (h != 0 && biomeTemperature(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) == 0) {
-					placeBlockStructure(chunk.blocks, oak_tree_1, i,h,k);
-                }else
-                if (h != 0 && biomeTemperature(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) == 1) {
-                    placeBlockStructure(chunk.blocks, spruce_tree_1, i, h, k);
-                }else
-                if (h != 0 && biomeTemperature(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) == 2 && (i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH)%11 == 0) {
+					int type = hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) % 35;
+                    if(type < 10) {
+                        placeBlockStructure(chunk.blocks, oak_tree_1, i, h, k);
+                    }else if (type < 20) {
+                        placeBlockStructure(chunk.blocks, oak_tree_2, i, h, k);
+                    }else if (type < 30) {
+                        placeBlockStructure(chunk.blocks, oak_tree_3, i, h, k);
+                    }else {
+						placeBlockStructure(chunk.blocks, oak_tree_4, i, h, k);
+                    }
+                }
+                else if (h != 0 && biomeTemperature(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) == 1) {
+                    int type = hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) % 34;
+                    if (type < 10) {
+                        placeBlockStructure(chunk.blocks, spruce_tree_1, i, h, k);
+                    }
+                    else if (type < 20) {
+                        placeBlockStructure(chunk.blocks, spruce_tree_2, i, h, k);
+                    }
+                    else if (type < 30) {
+                        placeBlockStructure(chunk.blocks, spruce_tree_3, i, h, k);
+                    }
+                    else {
+                        placeBlockStructure(chunk.blocks, spruce_tree_4, i, h, k);
+                    }
+                }
+                else if (h != 0 && biomeTemperature(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) == 2 && (i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH)%11 == 0) {
                     if ((i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH) % 5 == 0) {
                         placeBlockStructure(chunk.blocks, cactus_2, i, h, k);
                     }
@@ -891,7 +912,7 @@ void updateMesh(chunk& chunk) {
 
 
 void loadChunksAround() {
-    const int renderDistance = RENDER_DISTANCE;
+    const int renderDistance = camera.renderDistance;
 
     int pChunkX = static_cast<int>(floor(camera.Position.x / CHUNKWIDTH));
     int pChunkY = static_cast<int>(floor(camera.Position.z / CHUNKWIDTH));
@@ -918,7 +939,7 @@ void loadChunksAround() {
 
 
 void unloadDistantChunks() {
-    const int unloadDistance = RENDER_DISTANCE + 1;
+    const int unloadDistance = camera.renderDistance + 1;
 
     int pChunkX = static_cast<int>(floor(camera.Position.x / CHUNKWIDTH));
     int pChunkY = static_cast<int>(floor(camera.Position.z / CHUNKWIDTH));

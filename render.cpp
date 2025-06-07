@@ -958,17 +958,27 @@ void processInput(GLFWwindow* window){
 
     bool oCurrentPressed = glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS;
     bool pCurrentPressed = glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS;
-
     if (oCurrentPressed && !oPrevPressed) {
         camera.MovementSpeed /= 2.0f;
     }
-
     if (pCurrentPressed && !pPrevPressed) {
         camera.MovementSpeed *= 2.0f;
     }
-
     oPrevPressed = oCurrentPressed;
     pPrevPressed = pCurrentPressed;
+
+	static bool lPrevPressed = false;
+	static bool kPrevPressed = false;
+	bool lCurrentPressed = glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS;
+	bool kCurrentPressed = glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS;
+    if (lCurrentPressed && !lPrevPressed) {
+        camera.renderDistance += 1;
+	}
+    if (kCurrentPressed && !kPrevPressed) {
+        camera.renderDistance += -1;
+	}
+	lPrevPressed = lCurrentPressed;
+	kPrevPressed = kCurrentPressed;
 
     static bool nPrevPressed = false;
     bool nCurrentPressed = glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS;
