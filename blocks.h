@@ -8,7 +8,7 @@
 #define sand 4
 #define snowy_grass 5
 #define glass 6
-#define diamond 7
+#define diamond_ore 7
 #define oak_planks 8
 #define oak_log 9
 #define oak_leaves 10
@@ -24,6 +24,13 @@
 #define kelp 20
 #define gravel 21
 
+#define coal_ore 22
+#define ice 23
+#define bedrock 24
+#define brain_coral 25
+#define tube_coral 26
+#define fire_coral_block 27
+#define tube_coral_block 28
 
 enum BP {//block properties
 	SOLID = 1 << 0,
@@ -52,13 +59,20 @@ const std::uint32_t BLOCK_PROP[] = {
     SOLID,                            // spruce_log
     TRANSPARENT|RENDER_INSIDE | PLANT,// spruce_leaves
     TRANSPARENT|DONT_CAST_SHADOW|SEMI_TRANSPARENT,// water
-    PLANT|TRANSPARENT|DONT_CAST_SHADOW | CROSS_SHAPE,// short grass
-    PLANT|TRANSPARENT|DONT_CAST_SHADOW | CROSS_SHAPE,//poppy
-    PLANT | TRANSPARENT | DONT_CAST_SHADOW| CROSS_SHAPE,//dandelion
-    PLANT | TRANSPARENT | DONT_CAST_SHADOW | CROSS_SHAPE,//dead bush
-    PLANT | TRANSPARENT | DONT_CAST_SHADOW | CROSS_SHAPE,//sweet berry
-    PLANT | TRANSPARENT | DONT_CAST_SHADOW | CROSS_SHAPE,//kelp
+    PLANT|TRANSPARENT | CROSS_SHAPE,// short grass
+    PLANT|TRANSPARENT | CROSS_SHAPE,//poppy
+    PLANT | TRANSPARENT | CROSS_SHAPE,//dandelion
+    PLANT | TRANSPARENT  | CROSS_SHAPE,//dead bush
+    PLANT | TRANSPARENT | CROSS_SHAPE,//sweet berry
+    PLANT | TRANSPARENT | CROSS_SHAPE,//kelp
     SOLID,                            // gravel 
+	SOLID,                            // coal_ore
+    SOLID | TRANSPARENT ,   // ice
+    SOLID,                            // bedrock
+    PLANT | TRANSPARENT | CROSS_SHAPE, // brain_coral
+    PLANT | TRANSPARENT | CROSS_SHAPE, // tube_coral
+    SOLID, // fire_coral_block
+	SOLID, // tube_coral_block
 
 };
 

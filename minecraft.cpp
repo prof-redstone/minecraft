@@ -34,7 +34,7 @@ float lastFrame = 0.0f;
 bool flyMode = true;
 float playerHeight = 1.8;
 int waterHeight = 25;
-int seed = 2;
+int seed = 1;
 
 
 void addTopFace(vector<float>& mesh, float x, float y, float z, float ou, float ov, float s) {
@@ -143,7 +143,7 @@ vector<float> getFaceUV(int block, int face) {
     else if (block == dirt) { textureCo = std::vector<int>{ 3, 3, 3, 3, 3, 3 }[face]; }
     else if (block == grass) { textureCo = std::vector<int>{ 4, 4, 3, 5, 4, 4 }[face]; }
     else if (block == oak_leaves) { textureCo = std::vector<int>{ 7, 7, 7, 7, 7, 7 }[face]; }
-    else if (block == diamond) { textureCo = std::vector<int>{ 6, 6, 6, 6, 6, 6 }[face]; }
+    else if (block == diamond_ore) { textureCo = std::vector<int>{ 6, 6, 6, 6, 6, 6 }[face]; }
     else if (block == glass) { textureCo = std::vector<int>{ 2, 2, 2, 2, 2, 2 }[face]; }
     else if (block == oak_log) { textureCo = std::vector<int>{ 8, 8, 9, 9, 8, 8 }[face]; }
     else if (block == sand) { textureCo = std::vector<int>{ 10, 10, 10, 10, 10, 10 }[face]; }
@@ -159,8 +159,14 @@ vector<float> getFaceUV(int block, int face) {
     else if (block == sweet_berry) { textureCo = std::vector<int>{ 25, 25, 25, 25, 25, 25 }[face]; }
     else if (block == kelp) { textureCo = std::vector<int>{ 27, 27, 27, 27, 27, 27 }[face]; }
     else if (block == gravel) { textureCo = std::vector<int>{ 11, 11, 11, 11, 11, 11 }[face]; }
-
-
+    else if (block == coal_ore) { textureCo = std::vector<int>{ 15, 15, 15, 15, 15, 15 }[face]; }
+    else if (block == ice) { textureCo = std::vector<int>{ 26, 26, 26, 26, 26, 26 }[face]; }
+    else if (block == bedrock) { textureCo = std::vector<int>{ 29, 29, 29, 29, 29, 29 }[face]; }
+    else if (block == brain_coral) { textureCo = std::vector<int>{ 30, 30, 30, 30, 30, 30 }[face]; }
+    else if (block == tube_coral) { textureCo = std::vector<int>{ 31, 31, 31, 31, 31, 31 }[face]; }
+    else if (block == fire_coral_block) { textureCo = std::vector<int>{ 32, 32, 32, 32, 32, 32 }[face]; }
+    else if (block == tube_coral_block) { textureCo = std::vector<int>{ 31, 31, 31, 31, 31, 31 }[face]; }
+    
     vector<float> rez = { (float)(textureCo % textureMapWidth)/textureMapWidth,(float)(textureCo / textureMapWidth) / textureMapWidth,1.0f / textureMapWidth };
     return rez;
 }
@@ -300,8 +306,12 @@ void initChunk(chunk& chunk, int x, int y) {
                     else {
                         chunk.blocks[i][j][k] = water;
                     }
-                }                
+                }        
+                if(j== 0) {
+                    chunk.blocks[i][j][k] = bedrock;
+				}
             }
+
             //differentiation
             int biome = biomeTemperature(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed);
             if (biome == 0) { //plains
@@ -342,11 +352,10 @@ void initChunk(chunk& chunk, int x, int y) {
                         }
                     }
 
-                    if ((j == waterHeight) && (chunk.blocks[i][j][k] == snowy_grass)
-                        || (j == waterHeight + 1) && (chunk.blocks[i][j][k] == snowy_grass)
-                        || (j == waterHeight) && (chunk.blocks[i][j][k] == dirt)) {
-                        chunk.blocks[i][j][k] = gravel;
-                    }
+                    if ((j == waterHeight && chunk.blocks[i][j][k] == water && chunk.blocks[i][j - 1][k] == gravel)
+                    || (j == waterHeight && chunk.blocks[i][j][k] == gravel && chunk.blocks[i][j - 1][k] == dirt)) {
+                        chunk.blocks[i][j][k] = ice;
+					}
                 }
             }
             else if (biome == 2) {
@@ -407,33 +416,64 @@ void initChunk(chunk& chunk, int x, int y) {
     //decoration
     for (int i = 0; i < CHUNKWIDTH; ++i) {
         for (int k = 0; k < CHUNKWIDTH; ++k) {
+			int biome = biomeTemperature(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed);
             int h = surfaceLevel[i][k];
-            if (h < waterHeight || chunk.blocks[i][h + 1][k] != air) {
-                break;
+            if (h > waterHeight && chunk.blocks[i][h + 1][k] == air) {
+                if (h > waterHeight + 1 && biome == 0) {
+                    if ((hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) % 100) < 4) {
+                        chunk.blocks[i][h + 1][k] = short_grass;
+                        continue;
+                    }
+                    if ((hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed + 1) % 100) < 1) {
+                        chunk.blocks[i][h + 1][k] = poppy;
+                        continue;
+                    }
+                    if ((hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed + 2) % 100) < 1) {
+                        chunk.blocks[i][h + 1][k] = dandelion;
+                        continue;
+                    }
+                }
+                if (h > waterHeight + 1 && biome == 1) {//neige
+                    if ((hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) % 100) < 1) {
+                        chunk.blocks[i][h + 1][k] = sweet_berry;
+                        continue;
+                    }
+                }
+                if (h > waterHeight + 1 && biome == 2) {//desert
+                    if ((hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) % 200) < 1) {
+                        chunk.blocks[i][h + 1][k] = dead_bush;
+                        continue;
+                    }
+                }
+            }            
+
+            if (h < waterHeight-1 && biome == 1) {
+                if ((hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) % 100) < 8) {
+                    chunk.blocks[i][h + 1][k] = kelp;
+                    continue;
+                }
             }
-            if (h != 0 && biomeTemperature(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) == 0) {
-                if ((hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) % 100) < 4) {
-				    chunk.blocks[i][h + 1][k] = short_grass;
+            if (h < waterHeight - 1 && biome == 0) {
+                if ((hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) % 100) < 2) {
+                    chunk.blocks[i][h + 1][k] = kelp;
                     continue;
                 }
                 if ((hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed + 1) % 100) < 1) {
-                    chunk.blocks[i][h + 1][k] = poppy;
+                    chunk.blocks[i][h + 1][k] = tube_coral;
                     continue;
                 }
                 if ((hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed + 2) % 100) < 1) {
-                    chunk.blocks[i][h + 1][k] = dandelion;
+                    chunk.blocks[i][h + 1][k] = brain_coral;
                     continue;
                 }
             }
-            if (h != 0 && biomeTemperature(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) == 1) {
-                if ((hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) % 100) < 1) {
-                    chunk.blocks[i][h + 1][k] = sweet_berry;
+            if (h < waterHeight - 1 && biome == 2) {
+                if ((hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed + 1) % 100) < 2) {
+                    chunk.blocks[i][h + 1][k] = tube_coral;
                     continue;
                 }
-            }
-            if (h != 0 && biomeTemperature(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) == 2) {
-                if ((hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) % 200) < 1) {
-                    chunk.blocks[i][h + 1][k] = dead_bush;
+                if ((hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed + 2) % 100) < 2) {
+                    chunk.blocks[i][h + 1][k] = brain_coral;
                     continue;
                 }
             }
@@ -515,16 +555,18 @@ void updateMesh(chunk& chunk) {
                     }
                 }
 
-				//X POSITIVE FACE
+                //X POSITIVE FACE
                 if (i == 0) {
-                    if (hasWestChunk && hasProp(westChunk->blocks[CHUNKWIDTH - 1][j][k], TRANSPARENT) && (westChunk->blocks[CHUNKWIDTH - 1][j][k] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE)) ) {
+                    if (hasWestChunk && hasProp(westChunk->blocks[CHUNKWIDTH - 1][j][k], TRANSPARENT) && (westChunk->blocks[CHUNKWIDTH - 1][j][k] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE))) {
                         vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 0);
-						if ( ! hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
+                        if (!hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
                             if (!hasProp(chunk.blocks[i][j][k], SEMI_TRANSPARENT)) {
                                 addXNegFace(chunk.opaqueMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                             }
                             else {
-                                addXNegFace(chunk.transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                                if (westChunk->blocks[CHUNKWIDTH - 1][j][k] == air) {
+                                    addXNegFace(chunk.transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                                }
                             }
                         }
                         else {
@@ -532,19 +574,23 @@ void updateMesh(chunk& chunk) {
                                 addXNegFace(chunk.opaqueNoShadowMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                             }
                             else {
-                                addXNegFace(chunk.transpNoShadowMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                                if (westChunk->blocks[CHUNKWIDTH - 1][j][k] == air) {
+                                    addXNegFace(chunk.transpNoShadowMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                                }
                             }
                         }
                     }
                 }
-                else if ( hasProp(chunk.blocks[i - 1][j][k], TRANSPARENT) && (chunk.blocks[i - 1][j][k] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE)) ) {
+                else if (hasProp(chunk.blocks[i - 1][j][k], TRANSPARENT) && (chunk.blocks[i - 1][j][k] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE))) {
                     vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 0);
                     if (!hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
                         if (!hasProp(chunk.blocks[i][j][k], SEMI_TRANSPARENT)) {
                             addXNegFace(chunk.opaqueMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                         }
                         else {
-                            addXNegFace(chunk.transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            if (chunk.blocks[i - 1][j][k] == air) {
+                                addXNegFace(chunk.transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            }
                         }
                     }
                     else {
@@ -552,12 +598,14 @@ void updateMesh(chunk& chunk) {
                             addXNegFace(chunk.opaqueNoShadowMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                         }
                         else {
-                            addXNegFace(chunk.transpNoShadowMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            if (chunk.blocks[i - 1][j][k] == air) {
+                                addXNegFace(chunk.transpNoShadowMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            }
                         }
                     }
                 }
-				//X NEGATIVE FACE
-                if (i == CHUNKWIDTH - 1 ) {
+                //X NEGATIVE FACE
+                if (i == CHUNKWIDTH - 1) {
                     if (hasEastChunk && hasProp(eastChunk->blocks[0][j][k], TRANSPARENT) && (eastChunk->blocks[0][j][k] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE))) {
                         vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 1);
                         if (!hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
@@ -565,7 +613,9 @@ void updateMesh(chunk& chunk) {
                                 addXPosFace(chunk.opaqueMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
                             }
                             else {
-                                addXPosFace(chunk.transpMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                                if (eastChunk->blocks[0][j][k] == air) {
+                                    addXPosFace(chunk.transpMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                                }
                             }
                         }
                         else {
@@ -573,7 +623,9 @@ void updateMesh(chunk& chunk) {
                                 addXPosFace(chunk.opaqueNoShadowMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
                             }
                             else {
-                                addXPosFace(chunk.transpNoShadowMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                                if (eastChunk->blocks[0][j][k] == air) {
+                                    addXPosFace(chunk.transpNoShadowMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                                }
                             }
                         }
                     }
@@ -585,7 +637,9 @@ void updateMesh(chunk& chunk) {
                             addXPosFace(chunk.opaqueMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
                         }
                         else {
-                            addXPosFace(chunk.transpMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            if (chunk.blocks[i + 1][j][k] == air) {
+                                addXPosFace(chunk.transpMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            }
                         }
                     }
                     else {
@@ -593,7 +647,9 @@ void updateMesh(chunk& chunk) {
                             addXPosFace(chunk.opaqueNoShadowMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
                         }
                         else {
-                            addXPosFace(chunk.transpNoShadowMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            if (chunk.blocks[i + 1][j][k] == air) {
+                                addXPosFace(chunk.transpNoShadowMesh, i + 1, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            }
                         }
                     }
                 }
@@ -608,14 +664,16 @@ void updateMesh(chunk& chunk) {
                         //addBottomFace(chunk.mesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                     }*/
                 }
-                else if (hasProp(chunk.blocks[i][j-1][k], TRANSPARENT) && (chunk.blocks[i][j-1][k] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE))) {
+                else if (hasProp(chunk.blocks[i][j - 1][k], TRANSPARENT) && (chunk.blocks[i][j - 1][k] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE))) {
                     vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 2);
                     if (!hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
                         if (!hasProp(chunk.blocks[i][j][k], SEMI_TRANSPARENT)) {
                             addBottomFace(chunk.opaqueMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                         }
                         else {
-                            addBottomFace(chunk.transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            if (chunk.blocks[i][j - 1][k] == air) {
+                                addBottomFace(chunk.transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            }
                         }
                     }
                     else {
@@ -623,11 +681,13 @@ void updateMesh(chunk& chunk) {
                             addBottomFace(chunk.opaqueNoShadowMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                         }
                         else {
-                            addBottomFace(chunk.transpNoShadowMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            if (chunk.blocks[i][j - 1][k] == air) {
+                                addBottomFace(chunk.transpNoShadowMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            }
                         }
                     }
                 }
-				//TOP FACE
+                //TOP FACE
                 if (j == CHUNKHEIGHT - 1) {
                     vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 3);
                     if (!hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
@@ -654,7 +714,9 @@ void updateMesh(chunk& chunk) {
                             addTopFace(chunk.opaqueMesh, i, j + 1, k, faceUV[0], faceUV[1], faceUV[2]);
                         }
                         else {
-                            addTopFace(chunk.transpMesh, i, j + 1, k, faceUV[0], faceUV[1], faceUV[2]);
+                            if (chunk.blocks[i][j + 1][k] == air) {
+                                addTopFace(chunk.transpMesh, i, j + 1, k, faceUV[0], faceUV[1], faceUV[2]);
+                            }
                         }
                     }
                     else {
@@ -662,13 +724,15 @@ void updateMesh(chunk& chunk) {
                             addTopFace(chunk.opaqueNoShadowMesh, i, j + 1, k, faceUV[0], faceUV[1], faceUV[2]);
                         }
                         else {
-                            addTopFace(chunk.transpNoShadowMesh, i, j + 1, k, faceUV[0], faceUV[1], faceUV[2]);
+                            if (chunk.blocks[i][j + 1][k] == air) {
+                                addTopFace(chunk.transpNoShadowMesh, i, j + 1, k, faceUV[0], faceUV[1], faceUV[2]);
+                            }
                         }
                     }
                 }
 
 
-				//Z NEGATIVE FACE
+                //Z NEGATIVE FACE
                 if (k == 0) {
                     if (hasNorthChunk && hasProp(northChunk->blocks[i][j][CHUNKWIDTH - 1], TRANSPARENT) && (northChunk->blocks[i][j][CHUNKWIDTH - 1] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE))) {
                         vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 4);
@@ -677,7 +741,9 @@ void updateMesh(chunk& chunk) {
                                 addZNegFace(chunk.opaqueMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                             }
                             else {
-                                addZNegFace(chunk.transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                                if (northChunk->blocks[i][j][CHUNKWIDTH - 1] == air) {
+                                    addZNegFace(chunk.transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                                }
                             }
                         }
                         else {
@@ -685,19 +751,23 @@ void updateMesh(chunk& chunk) {
                                 addZNegFace(chunk.opaqueNoShadowMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                             }
                             else {
-                                addZNegFace(chunk.transpNoShadowMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                                if (northChunk->blocks[i][j][CHUNKWIDTH - 1] == air) {
+                                    addZNegFace(chunk.transpNoShadowMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                                }
                             }
                         }
                     }
                 }
-                else if (hasProp(chunk.blocks[i][j][k-1], TRANSPARENT) && (chunk.blocks[i][j][k-1] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE))) {
+                else if (hasProp(chunk.blocks[i][j][k - 1], TRANSPARENT) && (chunk.blocks[i][j][k - 1] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE))) {
                     vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 4);
                     if (!hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
                         if (!hasProp(chunk.blocks[i][j][k], SEMI_TRANSPARENT)) {
                             addZNegFace(chunk.opaqueMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                         }
                         else {
-                            addZNegFace(chunk.transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            if (chunk.blocks[i][j][k - 1] == air) {
+                                addZNegFace(chunk.transpMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            }
                         }
                     }
                     else {
@@ -705,11 +775,13 @@ void updateMesh(chunk& chunk) {
                             addZNegFace(chunk.opaqueNoShadowMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
                         }
                         else {
-                            addZNegFace(chunk.transpNoShadowMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            if (chunk.blocks[i][j][k - 1] == air) {
+                                addZNegFace(chunk.transpNoShadowMesh, i, j, k, faceUV[0], faceUV[1], faceUV[2]);
+                            }
                         }
                     }
                 }
-				//Z POSITIVE FACE
+                //Z POSITIVE FACE
                 if (k == CHUNKWIDTH - 1) {
                     if (hasSouthChunk && hasProp(southChunk->blocks[i][j][0], TRANSPARENT) && (southChunk->blocks[i][j][0] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE))) {
                         vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 5);
@@ -718,7 +790,9 @@ void updateMesh(chunk& chunk) {
                                 addZPosFace(chunk.opaqueMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
                             }
                             else {
-                                addZPosFace(chunk.transpMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
+                                if (southChunk->blocks[i][j][0] == air) {
+                                    addZPosFace(chunk.transpMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
+                                }
                             }
                         }
                         else {
@@ -726,19 +800,23 @@ void updateMesh(chunk& chunk) {
                                 addZPosFace(chunk.opaqueNoShadowMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
                             }
                             else {
-                                addZPosFace(chunk.transpNoShadowMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
+                                if (southChunk->blocks[i][j][0] == air) {
+                                    addZPosFace(chunk.transpNoShadowMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
+                                }
                             }
                         }
                     }
                 }
-                else if (hasProp(chunk.blocks[i][j][k+1], TRANSPARENT) && (chunk.blocks[i][j][k+1] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE))) {
+                else if (hasProp(chunk.blocks[i][j][k + 1], TRANSPARENT) && (chunk.blocks[i][j][k + 1] != chunk.blocks[i][j][k] || hasProp(chunk.blocks[i][j][k], RENDER_INSIDE))) {
                     vector<float> faceUV = getFaceUV(chunk.blocks[i][j][k], 5);
                     if (!hasProp(chunk.blocks[i][j][k], DONT_CAST_SHADOW)) {
                         if (!hasProp(chunk.blocks[i][j][k], SEMI_TRANSPARENT)) {
                             addZPosFace(chunk.opaqueMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
                         }
                         else {
-                            addZPosFace(chunk.transpMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
+                            if (chunk.blocks[i][j][k + 1] == air) {
+                                addZPosFace(chunk.transpMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
+                            }
                         }
                     }
                     else {
@@ -746,7 +824,9 @@ void updateMesh(chunk& chunk) {
                             addZPosFace(chunk.opaqueNoShadowMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
                         }
                         else {
-                            addZPosFace(chunk.transpNoShadowMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
+                            if (chunk.blocks[i][j][k + 1] == air) {
+                                addZPosFace(chunk.transpNoShadowMesh, i, j, k + 1, faceUV[0], faceUV[1], faceUV[2]);
+                            }
                         }
                     }
                 }
@@ -1169,8 +1249,13 @@ void processKey() {
     if (camera.key4Pressed) currentBlock = dirt;
     if (camera.key5Pressed) currentBlock = oak_log;
     if (camera.key6Pressed) currentBlock = grass;
-    if (camera.key7Pressed) currentBlock = diamond;
+    if (camera.key7Pressed) currentBlock = diamond_ore;
     if (camera.key8Pressed) currentBlock = oak_leaves;
+
+    if (camera.arrowDownPressed) camera.ProcessMouseMovement(-0.0, -1.0);
+	if (camera.arrowUpPressed) camera.ProcessMouseMovement(0.0, 1.0);
+	if (camera.arrowLeftPressed) camera.ProcessMouseMovement(-1.0, 0.0);
+	if (camera.arrowRightPressed) camera.ProcessMouseMovement(1.0, 0.0);    
 
     if (camera.flyPressed) { 
 		camera.MovementSpeed = 100.0f;
@@ -1352,7 +1437,7 @@ void setAtmosphere() {
         if (blockY >= CHUNKHEIGHT-1) return;
         signed char blockType = chunkIt->second.blocks[localX][blockY][localZ];
         if (blockType == water) {
-			camera.colorOverlay = glm::vec4(0.0f, 0.0f, 1.0f, 0.2f);
+			camera.colorOverlay = glm::vec4(0.0f, 0.2f, 1.0f, 0.2f);
         }
         else {
             camera.colorOverlay = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
@@ -1368,12 +1453,12 @@ int main() {
 
     Light* sun = createLight(DIRECTIONAL, true);
     setLightColor(sun, glm::vec3(1.0, 1.0, 1.0));
-    setLightIntensity(sun, 0.60);
+    setLightIntensity(sun, 0.62);
     setLightDirection(sun, glm::vec3(-3.8f, 7.5f, -5.0f));
 
     Light* skyLight = createLight(DIRECTIONAL, false);
     setLightColor(skyLight, glm::vec3(0.5, 0.8, 0.9));
-    setLightIntensity(skyLight, 0.15);
+    setLightIntensity(skyLight, 0.2);
     setLightDirection(skyLight, glm::vec3(0.0f, 1.0f, 0.0f));
 
     while (shouldCloseTheApp()) {

@@ -43,6 +43,7 @@ static float deltaTime = 0.0f;
 static float lastFrame = 0.0f;
 static int frameCounter = 0;
 static float gamma = 1.0;
+static bool renderUI = true;
 static unsigned int shaderSkybox;
 static unsigned int shaderLight;
 static unsigned int shaderProgram;
@@ -546,7 +547,7 @@ void renderScene() {
     for (int i = 0; i < plantMeshList.size(); i++) {
         glUniform1i(glGetUniformLocation(shaderProgram, "enableWind"), 1);
         glUniform1f(glGetUniformLocation(shaderProgram, "time"), glfwGetTime());
-        glUniform1f(glGetUniformLocation(shaderProgram, "windStrength"), 0.3f);
+        glUniform1f(glGetUniformLocation(shaderProgram, "windStrength"), 0.4f);
         glUniform3f(glGetUniformLocation(shaderProgram, "windDirection"), 1.0f, 0.0f, 0.5f);
 
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(glm::translate((*plantMeshList[i]).model, -camera.Position)));
@@ -620,12 +621,14 @@ void renderScene() {
 
     //render bock target : //re use same thing as light
     //glUseProgram(shaderLight);
-    glUniformMatrix4fv(glGetUniformLocation(shaderLight, "model"), 1, GL_FALSE, glm::value_ptr(glm::scale(glm::mat4(glm::translate(glm::mat4(1.0f), blockTargetPos + glm::vec3(0.5, 0.5, 0.5) - camera.Position)), glm::vec3(0.505f))));
-    glUniformMatrix4fv(glGetUniformLocation(shaderLight, "view"), 1, GL_FALSE, glm::value_ptr(view));
-    glUniformMatrix4fv(glGetUniformLocation(shaderLight, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-    glUniform4fv(glGetUniformLocation(shaderLight, "color"), 1, glm::value_ptr(glm::vec4(1.0,1.0,1.0, 0.10f)));
-    glBindVertexArray(VAO_LIGHT);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    if (renderUI) {
+        glUniformMatrix4fv(glGetUniformLocation(shaderLight, "model"), 1, GL_FALSE, glm::value_ptr(glm::scale(glm::mat4(glm::translate(glm::mat4(1.0f), blockTargetPos + glm::vec3(0.5, 0.5, 0.5) - camera.Position)), glm::vec3(0.505f))));
+        glUniformMatrix4fv(glGetUniformLocation(shaderLight, "view"), 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(glGetUniformLocation(shaderLight, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        glUniform4fv(glGetUniformLocation(shaderLight, "color"), 1, glm::value_ptr(glm::vec4(1.0,1.0,1.0, 0.10f)));
+        glBindVertexArray(VAO_LIGHT);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
 
 
     //color view
@@ -644,16 +647,18 @@ void renderScene() {
 
 
     //cube pointeur GUI
-    boxPos = glm::vec3(0.0, 0.0, 0.0) + camera.Front * glm::float32(0.1);
-    billboardMatrix = glm::inverse(glm::lookAt(boxPos, glm::vec3(0.0, 0.0, 0.0), camera.Up));
-    modelMatrix = billboardMatrix * glm::scale(glm::mat4(1.0f), glm::vec3(0.0007f));
+    if (renderUI) {
+        boxPos = glm::vec3(0.0, 0.0, 0.0) + camera.Front * glm::float32(0.1);
+        billboardMatrix = glm::inverse(glm::lookAt(boxPos, glm::vec3(0.0, 0.0, 0.0), camera.Up));
+        modelMatrix = billboardMatrix * glm::scale(glm::mat4(1.0f), glm::vec3(0.0007f));
 
-    glUniformMatrix4fv(glGetUniformLocation(shaderLight, "model"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
-    glUniformMatrix4fv(glGetUniformLocation(shaderLight, "view"), 1, GL_FALSE, glm::value_ptr(view));
-    glUniformMatrix4fv(glGetUniformLocation(shaderLight, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-    glUniform4fv(glGetUniformLocation(shaderLight, "color"), 1, glm::value_ptr(glm::vec4(1.0, 1.0, 1.0, 1.0f)));
-    glBindVertexArray(VAO_LIGHT);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+        glUniformMatrix4fv(glGetUniformLocation(shaderLight, "model"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+        glUniformMatrix4fv(glGetUniformLocation(shaderLight, "view"), 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(glGetUniformLocation(shaderLight, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        glUniform4fv(glGetUniformLocation(shaderLight, "color"), 1, glm::value_ptr(glm::vec4(1.0, 1.0, 1.0, 1.0f)));
+        glBindVertexArray(VAO_LIGHT);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
     glDepthMask(GL_TRUE);
 
     glfwSwapBuffers(window);
@@ -942,6 +947,35 @@ void processInput(GLFWwindow* window){
     camera.tabPressed = (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS);
     camera.flyPressed = (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS);
     camera.walkPressed = (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS);
+
+    camera.arrowUpPressed = glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS;
+    camera.arrowDownPressed = glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS;
+    camera.arrowLeftPressed = glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS;
+    camera.arrowRightPressed = glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS;
+
+    static bool oPrevPressed = false;
+    static bool pPrevPressed = false;
+
+    bool oCurrentPressed = glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS;
+    bool pCurrentPressed = glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS;
+
+    if (oCurrentPressed && !oPrevPressed) {
+        camera.MovementSpeed /= 2.0f;
+    }
+
+    if (pCurrentPressed && !pPrevPressed) {
+        camera.MovementSpeed *= 2.0f;
+    }
+
+    oPrevPressed = oCurrentPressed;
+    pPrevPressed = pCurrentPressed;
+
+    static bool nPrevPressed = false;
+    bool nCurrentPressed = glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS;
+    if (nCurrentPressed && !nPrevPressed) {
+		renderUI = !renderUI;
+    }
+	nPrevPressed = nCurrentPressed;
 }
 
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn){

@@ -66,6 +66,11 @@ public:
 
     bool spacePressed = false;
 
+    bool arrowUpPressed = false;
+    bool arrowDownPressed = false;
+    bool arrowLeftPressed = false;
+    bool arrowRightPressed = false;
+
 	glm::vec4 colorOverlay = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
     // constructor with vectors
