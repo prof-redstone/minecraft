@@ -304,3 +304,115 @@ inline const std::vector<std::tuple<int, int, int, int, int>> cactus_3 = {
     {0, 1, 0, cactus, 1},
     {0, 2, 0, cactus, 1}
 };
+
+inline const std::vector<std::tuple<int, int, int, int, int>> coral_1 = {
+    {0, 0, 0, fire_coral_block, 1},
+    {1, 1, 0, fire_coral_block, 1},
+    {-1, 1, 0, fire_coral_block, 1},
+    {0, 1, 1, fire_coral_block, 1},
+    {0, 1, -1, fire_coral_block, 1},
+};
+
+inline const std::vector<std::tuple<int, int, int, int, int>> coral_2 = {
+    {0, 1, 0, fire_coral_block, 1},
+    {1, 1, 0, fire_coral_block, 1},
+    {1, 1, 1, fire_coral_block, 1},
+    {0, 1, 1, fire_coral_block, 1},
+    {0, 2, 0, fire_coral_block, 1},
+};
+
+inline const std::vector<std::tuple<int, int, int, int, int>> coral_3 = {
+    {0, 0, 0, fire_coral_block, 1},
+    {1, 1, 0, fire_coral_block, 1},
+    {-1, 1, 0, fire_coral_block, 1},
+    {0, 1, 1, fire_coral_block, 1},
+    {0, 2, 1, fire_coral_block, 1},
+};
+
+inline const std::vector<std::tuple<int, int, int, int, int>> coral_4 = {
+    {0, 1, 0, fire_coral_block, 1},
+    {1, 1, 1, fire_coral_block, 1},
+    {-1, 1, -1, fire_coral_block, 1},
+    {0, 2, 0, fire_coral_block, 1},
+    {1, 2, 0, fire_coral_block, 1},
+};
+
+inline const std::vector<std::tuple<int, int, int, int, int>> coral_5 = {
+    {0, 0, 0, fire_coral_block, 1},
+    {0, 1, 0, fire_coral_block, 1},
+    {0, 2, 0, fire_coral_block, 1},
+    {1, 2, 0, fire_coral_block, 1},
+    {0, 2, 1, fire_coral_block, 1},
+};
+
+inline const std::vector<std::tuple<int, int, int, int, int>> coral_6 = {
+    {0, 0, 0, fire_coral_block, 1},
+    {0, 1, 0, fire_coral_block, 1},
+    {1, 1, 0, fire_coral_block, 1},
+    {0, 2, 0, fire_coral_block, 1},
+    {-1, 2, 0, fire_coral_block, 1},
+};
+
+inline const std::vector<std::tuple<int, int, int, int, int>> coral_7 = {
+    {0, 0, 0, fire_coral_block, 1},
+    {0, 1, 0, fire_coral_block, 1},
+    {1, 1, 1, fire_coral_block, 1},
+    {-1, 1, -1, fire_coral_block, 1},
+    {0, 2, 0, fire_coral_block, 1},
+};
+
+inline const std::vector<std::tuple<int, int, int, int, int>> coral_8 = {
+    {0, 0, 0, tube_coral_block, 1},
+    {1, 1, 0, tube_coral_block, 1},
+    {-1, 1, 0, tube_coral_block, 1},
+    {0, 1, 1, tube_coral_block, 1},
+    {0, 1, -1, tube_coral_block, 1},
+};
+
+inline const std::vector<std::tuple<int, int, int, int, int>> coral_9 = {
+    {0, 1, 0, tube_coral_block, 1},
+    {1, 1, 0, tube_coral_block, 1},
+    {1, 1, 1, tube_coral_block, 1},
+    {0, 1, 1, tube_coral_block, 1},
+    {0, 2, 0, tube_coral_block, 1},
+};
+
+inline const std::vector<std::tuple<int, int, int, int, int>> coral_10 = {
+    {0, 0, 0, tube_coral_block, 1},
+    {1, 1, 0, tube_coral_block, 1},
+    {-1, 1, 0, tube_coral_block, 1},
+    {0, 1, 1, tube_coral_block, 1},
+    {0, 2, 1, tube_coral_block, 1},
+};
+
+inline const std::vector<std::tuple<int, int, int, int, int>> coral_11 = {
+    {0, 1, 0, tube_coral_block, 1},
+    {1, 1, 1, tube_coral_block, 1},
+    {-1, 1, -1, tube_coral_block, 1},
+    {0, 2, 0, tube_coral_block, 1},
+    {1, 2, 0, tube_coral_block, 1},
+};
+
+inline const std::vector<std::tuple<int, int, int, int, int>> coral_12 = {
+    {0, 0, 0, tube_coral_block, 1},
+    {0, 1, 0, tube_coral_block, 1},
+    {0, 2, 0, tube_coral_block, 1},
+    {1, 2, 0, tube_coral_block, 1},
+    {0, 2, 1, tube_coral_block, 1},
+};
+
+inline const std::vector<std::tuple<int, int, int, int, int>> coral_13 = {
+    {0, 0, 0, tube_coral_block, 1},
+    {0, 1, 0, tube_coral_block, 1},
+    {1, 1, 0, tube_coral_block, 1},
+    {0, 2, 0, tube_coral_block, 1},
+    {-1, 2, 0, tube_coral_block, 1},
+};
+
+inline const std::vector<std::tuple<int, int, int, int, int>> coral_14 = {
+    {0, 0, 0, tube_coral_block, 1},
+    {0, 1, 0, tube_coral_block, 1},
+    {1, 1, 1, tube_coral_block, 1},
+    {-1, 1, -1, tube_coral_block, 1},
+    {0, 2, 0, tube_coral_block, 1},
+};

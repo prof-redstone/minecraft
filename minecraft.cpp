@@ -164,7 +164,7 @@ vector<float> getFaceUV(int block, int face) {
     else if (block == brain_coral) { textureCo = std::vector<int>{ 30, 30, 30, 30, 30, 30 }[face]; }
     else if (block == tube_coral) { textureCo = std::vector<int>{ 31, 31, 31, 31, 31, 31 }[face]; }
     else if (block == fire_coral_block) { textureCo = std::vector<int>{ 32, 32, 32, 32, 32, 32 }[face]; }
-    else if (block == tube_coral_block) { textureCo = std::vector<int>{ 31, 31, 31, 31, 31, 31 }[face]; }
+    else if (block == tube_coral_block) { textureCo = std::vector<int>{ 33, 33, 33, 33, 33, 33 }[face]; }
     
     vector<float> rez = { (float)(textureCo % textureMapWidth)/textureMapWidth,(float)(textureCo / textureMapWidth) / textureMapWidth,1.0f / textureMapWidth };
     return rez;
@@ -373,13 +373,14 @@ void initChunk(chunk& chunk, int x, int y) {
 
         }
     }
-    //tree
+    //tree / strcuture
     for (int i = -3; i < CHUNKWIDTH + 3; ++i) {
         for (int k = -3; k < CHUNKWIDTH+3; ++k) {
             if (asATree(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed)) {
                 int h = 0;
+				int biome = biomeTemperature(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed);
                 if (i < 0 || k < 0 || i >= CHUNKWIDTH || k >= CHUNKWIDTH) {
-                    for (int j = CHUNKHEIGHT - 2; j >= waterHeight; --j) {
+                    for (int j = CHUNKHEIGHT - 2; j >= 0; --j) {
                         if (blockDensity(i + key.x * CHUNKWIDTH, j, k + key.y * CHUNKWIDTH, seed) < 0.0) {
                             h = j;
                             break;
@@ -388,46 +389,90 @@ void initChunk(chunk& chunk, int x, int y) {
                 }else {
 					h = surfaceLevel[i][k];                    
                 }
-                if (h < waterHeight+2) {
-                    break;
-                }
-
-                if (h != 0 && biomeTemperature(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) == 0) {
-					int type = hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) % 35;
-                    if(type < 10) {
-                        placeBlockStructure(chunk.blocks, oak_tree_1, i, h, k);
-                    }else if (type < 20) {
-                        placeBlockStructure(chunk.blocks, oak_tree_2, i, h, k);
-                    }else if (type < 30) {
-                        placeBlockStructure(chunk.blocks, oak_tree_3, i, h, k);
-                    }else {
-						placeBlockStructure(chunk.blocks, oak_tree_4, i, h, k);
+                if (h >= waterHeight+2) {
+                    if (h != 0 && biome == 0) {
+					    int type = hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) % 35;
+                        if(type < 10) {
+                            placeBlockStructure(chunk.blocks, oak_tree_1, i, h, k);
+                        }else if (type < 20) {
+                            placeBlockStructure(chunk.blocks, oak_tree_2, i, h, k);
+                        }else if (type < 30) {
+                            placeBlockStructure(chunk.blocks, oak_tree_3, i, h, k);
+                        }else {
+						    placeBlockStructure(chunk.blocks, oak_tree_4, i, h, k);
+                        }
+                    }
+                    else if (h != 0 && biome == 1) {
+                        int type = hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) % 34;
+                        if (type < 10) {
+                            placeBlockStructure(chunk.blocks, spruce_tree_1, i, h, k);
+                        }
+                        else if (type < 20) {
+                            placeBlockStructure(chunk.blocks, spruce_tree_2, i, h, k);
+                        }
+                        else if (type < 30) {
+                            placeBlockStructure(chunk.blocks, spruce_tree_3, i, h, k);
+                        }
+                        else {
+                            placeBlockStructure(chunk.blocks, spruce_tree_4, i, h, k);
+                        }
+                    }
+                    else if (h != 0 && biome == 2 && (i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH)%11 == 0) {
+                        if ((i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH) % 5 == 0) {
+                            placeBlockStructure(chunk.blocks, cactus_2, i, h, k);
+                        }
+                        else if ((i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH) % 5 == 1) {
+                            placeBlockStructure(chunk.blocks, cactus_3, i, h, k);
+                        }
+                        else {
+						    placeBlockStructure(chunk.blocks, cactus_1, i, h, k);
+                        }
                     }
                 }
-                else if (h != 0 && biomeTemperature(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) == 1) {
-                    int type = hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) % 34;
-                    if (type < 10) {
-                        placeBlockStructure(chunk.blocks, spruce_tree_1, i, h, k);
-                    }
-                    else if (type < 20) {
-                        placeBlockStructure(chunk.blocks, spruce_tree_2, i, h, k);
-                    }
-                    else if (type < 30) {
-                        placeBlockStructure(chunk.blocks, spruce_tree_3, i, h, k);
-                    }
-                    else {
-                        placeBlockStructure(chunk.blocks, spruce_tree_4, i, h, k);
-                    }
-                }
-                else if (h != 0 && biomeTemperature(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) == 2 && (i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH)%11 == 0) {
-                    if ((i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH) % 5 == 0) {
-                        placeBlockStructure(chunk.blocks, cactus_2, i, h, k);
-                    }
-                    else if ((i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH) % 5 == 1) {
-                        placeBlockStructure(chunk.blocks, cactus_3, i, h, k);
-                    }
-                    else {
-						placeBlockStructure(chunk.blocks, cactus_1, i, h, k);
+                else {
+                    if (h > 1 && h < waterHeight - 2) {
+                        if (biome == 0) {
+                            if ((hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) % 100) < 5) {
+                                int type = hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) % 14;
+                                if (type < 1) placeBlockStructure(chunk.blocks, coral_1, i, h, k);
+                                else if (type < 2) placeBlockStructure(chunk.blocks, coral_2, i, h, k);
+                                else if (type < 3) placeBlockStructure(chunk.blocks, coral_3, i, h, k);
+                                else if (type < 4) placeBlockStructure(chunk.blocks, coral_4, i, h, k);
+                                else if (type < 5) placeBlockStructure(chunk.blocks, coral_5, i, h, k);
+                                else if (type < 6) placeBlockStructure(chunk.blocks, coral_6, i, h, k);
+                                else if (type < 7) placeBlockStructure(chunk.blocks, coral_7, i, h, k);
+                                else if (type < 8) placeBlockStructure(chunk.blocks, coral_8, i, h, k);
+                                else if (type < 9) placeBlockStructure(chunk.blocks, coral_9, i, h, k);
+                                else if (type < 10) placeBlockStructure(chunk.blocks, coral_10, i, h, k);
+                                else if (type < 11) placeBlockStructure(chunk.blocks, coral_11, i, h, k);
+                                else if (type < 12) placeBlockStructure(chunk.blocks, coral_12, i, h, k);
+                                else if (type < 13) placeBlockStructure(chunk.blocks, coral_13, i, h, k);
+                                else {
+                                    placeBlockStructure(chunk.blocks, coral_14, i, h, k);
+                                }                            
+                            }
+                        }
+                        if (biome == 2) {
+                            if ((hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) % 100) < 40) {
+                                int type = hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) % 14;
+                                if (type < 1) placeBlockStructure(chunk.blocks, coral_1, i, h, k);
+                                else if (type < 2) placeBlockStructure(chunk.blocks, coral_2, i, h, k);
+                                else if (type < 3) placeBlockStructure(chunk.blocks, coral_3, i, h, k);
+                                else if (type < 4) placeBlockStructure(chunk.blocks, coral_4, i, h, k);
+                                else if (type < 5) placeBlockStructure(chunk.blocks, coral_5, i, h, k);
+                                else if (type < 6) placeBlockStructure(chunk.blocks, coral_6, i, h, k);
+                                else if (type < 7) placeBlockStructure(chunk.blocks, coral_7, i, h, k);
+                                else if (type < 8) placeBlockStructure(chunk.blocks, coral_8, i, h, k);
+                                else if (type < 9) placeBlockStructure(chunk.blocks, coral_9, i, h, k);
+                                else if (type < 10) placeBlockStructure(chunk.blocks, coral_10, i, h, k);
+                                else if (type < 11) placeBlockStructure(chunk.blocks, coral_11, i, h, k);
+                                else if (type < 12) placeBlockStructure(chunk.blocks, coral_12, i, h, k);
+                                else if (type < 13) placeBlockStructure(chunk.blocks, coral_13, i, h, k);
+                                else {
+                                    placeBlockStructure(chunk.blocks, coral_14, i, h, k);
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -468,13 +513,13 @@ void initChunk(chunk& chunk, int x, int y) {
                 }
             }            
 
-            if (h < waterHeight-1 && biome == 1) {
+            if (h < waterHeight-1 && biome == 1 && chunk.blocks[i][h + 1][k] == water) {
                 if ((hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) % 100) < 8) {
                     chunk.blocks[i][h + 1][k] = kelp;
                     continue;
                 }
             }
-            if (h < waterHeight - 1 && biome == 0) {
+            if (h < waterHeight - 1 && biome == 0 && chunk.blocks[i][h + 1][k] == water) {
                 if ((hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) % 100) < 2) {
                     chunk.blocks[i][h + 1][k] = kelp;
                     continue;
@@ -488,7 +533,7 @@ void initChunk(chunk& chunk, int x, int y) {
                     continue;
                 }
             }
-            if (h < waterHeight - 1 && biome == 2) {
+            if (h < waterHeight - 1 && biome == 2 && chunk.blocks[i][h + 1][k] == water) {
                 if ((hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed + 1) % 100) < 2) {
                     chunk.blocks[i][h + 1][k] = tube_coral;
                     continue;
@@ -1325,7 +1370,7 @@ void processKey() {
 
         int blockHead = (int)(camera.Position.y);
         int blockBelly = (int)(camera.Position.y - playerHeight/2);
-        int blockFoot = (int)(camera.Position.y - playerHeight);
+        int blockFoot = (int)(camera.Position.y - playerHeight+0.001);
 
 
         int chunkXLeft = static_cast<int>(floor((float)(camera.Position.x - largeur) / CHUNKWIDTH));
