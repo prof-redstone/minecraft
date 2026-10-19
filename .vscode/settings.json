@@ -4,5 +4,6 @@
         "utility": "cpp",
         "cmath": "cpp",
         "vector": "cpp"
-    }
+    },
+    "cmake.sourceDirectory": "C:/Users/tomde/OneDrive/Documents/programmation/C++/minecraft/glm"
 }

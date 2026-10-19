@@ -453,7 +453,7 @@ void initChunk(chunk& chunk, int x, int y) {
                             }
                         }
                         if (biome == 2) {
-                            if ((hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) % 100) < 40) {
+                            if ((hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) % 100) < 100) {
                                 int type = hash2D(i + key.x * CHUNKWIDTH, k + key.y * CHUNKWIDTH, seed) % 14;
                                 if (type < 1) placeBlockStructure(chunk.blocks, coral_1, i, h, k);
                                 else if (type < 2) placeBlockStructure(chunk.blocks, coral_2, i, h, k);
