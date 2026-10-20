@@ -3,7 +3,17 @@
 A from-scratch recreation of Minecraft's core gameplay, built entirely in **C++** and **OpenGL** without using any commercial game engine (Unity, Unreal, etc.). The project started by developing a small custom 3D engine ([graphics-engine](https://github.com/prof-redstone/graphics-engine)), then evolved into a fully functional block-based voxel world with procedural terrain generation, chunk streaming, real-time shadows, and basic player interaction.
 
 
-![Screenshot](photos/TopOfTheIsland.png)
+
+## Media
+
+A tour of the different biomes (plains, snow, desert, ocean) with their vegetation, and real-time shadows:
+
+<video src="media/MinecraftPresentation1.mp4" autoplay loop muted playsinline></video>
+
+Building a small house to demonstrate block placing and breaking:
+
+<video src="media/MinecraftPresentation2.mp4" autoplay loop muted playsinline></video>
+
 
 ## Features
 
