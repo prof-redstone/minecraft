@@ -8,11 +8,11 @@ A from-scratch recreation of Minecraft's core gameplay, built entirely in **C++*
 
 A tour of the different biomes (plains, snow, desert, ocean) with their vegetation, and real-time shadows:
 
-<video src="https://github.com/user-attachments/assets/7a95ffcd-8e77-4051-bbf6-ea912a4553ac" autoplay loop muted playsinline></video>
+https://github.com/user-attachments/assets/7a95ffcd-8e77-4051-bbf6-ea912a4553ac
 
 Building a small house to demonstrate block placing and breaking:
 
-<video src="https://github.com/user-attachments/assets/9216039e-df99-432a-8f7e-0649fa04123a" autoplay loop muted playsinline></video>
+https://github.com/user-attachments/assets/9216039e-df99-432a-8f7e-0649fa04123a
 
 
 ## Features
