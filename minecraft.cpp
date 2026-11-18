@@ -1348,11 +1348,12 @@ void processKey() {
     }
     else {
         glm::vec3 dPos = glm::vec3(0.0, 0.0, 0.0);
+
         if (camera.forwardPressed) {
-            dPos += glm::normalize(glm::vec3(camera.Front.x, 0.0f, camera.Front.z)) * camera.MovementSpeed * deltaTime;
+            dPos += camera.WorldForward * camera.MovementSpeed * deltaTime;
         }
         if (camera.backwardPressed) {
-            dPos += glm::normalize(glm::vec3(camera.Front.x, 0.0f, camera.Front.z)) * -camera.MovementSpeed * deltaTime;
+            dPos += camera.WorldForward * -camera.MovementSpeed * deltaTime;
         }
         if (camera.rightPressed) {
             dPos += glm::normalize(glm::vec3(camera.Right.x, 0.0f, camera.Right.z)) * camera.MovementSpeed * deltaTime;
