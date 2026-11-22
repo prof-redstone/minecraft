@@ -909,6 +909,11 @@ void updateMesh(chunk& chunk) {
         }
         setMeshPosition(chunk.opaqueMeshObj, glm::vec3(chunk.key.x* CHUNKWIDTH, 0, chunk.key.y* CHUNKWIDTH));
     }
+    else if (chunk.opaqueMeshObj != nullptr) {
+        deleteMesh(chunk.opaqueMeshObj);
+        chunk.opaqueMeshObj = nullptr;
+    }
+
     if (!chunk.opaqueNoShadowMesh.empty()) {
         if (chunk.opaqueNoShadowMeshObj == NULL) {
             chunk.opaqueNoShadowMeshObj = setupMeshTexture(chunk.opaqueNoShadowMesh, glm::vec3(chunk.key.x * CHUNKWIDTH, 0, chunk.key.y * CHUNKWIDTH), false, false, false);
@@ -918,6 +923,10 @@ void updateMesh(chunk& chunk) {
             updateMeshTexture(chunk.opaqueNoShadowMeshObj, chunk.opaqueNoShadowMesh);
         }
         setMeshPosition(chunk.opaqueNoShadowMeshObj, glm::vec3(chunk.key.x * CHUNKWIDTH, 0, chunk.key.y * CHUNKWIDTH));
+    }
+    else if (chunk.opaqueNoShadowMeshObj != nullptr) {
+        deleteMesh(chunk.opaqueNoShadowMeshObj);
+        chunk.opaqueNoShadowMeshObj = nullptr;
     }
 
     if (!chunk.transpMesh.empty()) {
@@ -930,6 +939,11 @@ void updateMesh(chunk& chunk) {
         }
         setMeshPosition(chunk.transpMeshObj, glm::vec3(chunk.key.x * CHUNKWIDTH, 0, chunk.key.y * CHUNKWIDTH));
     }
+    else if (chunk.transpMeshObj != nullptr) {
+        deleteMesh(chunk.transpMeshObj);
+        chunk.transpMeshObj = nullptr;
+    }
+
     if (!chunk.transpNoShadowMesh.empty()) {
         if (chunk.transpNoShadowMeshObj == NULL) {
             chunk.transpNoShadowMeshObj = setupMeshTexture(chunk.transpNoShadowMesh, glm::vec3(chunk.key.x * CHUNKWIDTH, 0, chunk.key.y * CHUNKWIDTH), true, false, false);
@@ -939,6 +953,10 @@ void updateMesh(chunk& chunk) {
             updateMeshTexture(chunk.transpNoShadowMeshObj, chunk.transpNoShadowMesh);
         }
         setMeshPosition(chunk.transpNoShadowMeshObj, glm::vec3(chunk.key.x * CHUNKWIDTH, 0, chunk.key.y * CHUNKWIDTH));
+    }
+    else if (chunk.transpNoShadowMeshObj != nullptr) {
+        deleteMesh(chunk.transpNoShadowMeshObj);
+        chunk.transpNoShadowMeshObj = nullptr;
     }
 
     if (!chunk.plantMesh.empty()) {
@@ -950,6 +968,10 @@ void updateMesh(chunk& chunk) {
             updateMeshTexture(chunk.plantMeshObj, chunk.plantMesh);
         }
         setMeshPosition(chunk.plantMeshObj, glm::vec3(chunk.key.x * CHUNKWIDTH, 0, chunk.key.y * CHUNKWIDTH));
+    }
+    else if (chunk.plantMeshObj != nullptr) {
+        deleteMesh(chunk.plantMeshObj);
+        chunk.plantMeshObj = nullptr;
     }
     
 }
@@ -1294,10 +1316,48 @@ void processClick() {
                 glm::ivec3 posPlayerInt = glm::ivec3(glm::floor(camera.Position.x), glm::floor(camera.Position.y), glm::floor(camera.Position.z));
                 if (airBlockPos != posPlayerInt && airBlockPos != (posPlayerInt - glm::ivec3(0, 1, 0))) {
                     chunkIt->second.blocks[localX][airBlockPos.y][localZ] = currentBlock;
-                }
 
-                Chunk& chunk = chunkIt->second;
-                updateMesh(chunk);
+                    Chunk& chunk = chunkIt->second;
+                    updateMesh(chunk);
+
+                    // Update seams between chunks
+                    if (localX == 0) {
+                        ChunkKey westKey = { chunk.key.x - 1, chunk.key.y };
+                        auto westIt = chunks.find(westKey);
+                        if (westIt != chunks.end()) {
+                            if (westIt->second.isActive) {
+                                updateMesh(westIt->second);
+                            }
+                        }
+                    }
+                    if (localX == CHUNKWIDTH - 1) {
+                        ChunkKey eastKey = { chunk.key.x + 1, chunk.key.y };
+                        auto eastIt = chunks.find(eastKey);
+                        if (eastIt != chunks.end()) {
+                            if (eastIt->second.isActive) {
+                                updateMesh(eastIt->second);
+                            }
+                        }
+                    }
+                    if (localZ == 0) {
+                        ChunkKey northKey = { chunk.key.x, chunk.key.y - 1 };
+                        auto northIt = chunks.find(northKey);
+                        if (northIt != chunks.end()) {
+                            if (northIt->second.isActive) {
+                                updateMesh(northIt->second);
+                            }
+                        }
+                    }
+                    if (localZ == CHUNKWIDTH - 1) {
+                        ChunkKey southKey = { chunk.key.x, chunk.key.y + 1 };
+                        auto southIt = chunks.find(southKey);
+                        if (southIt != chunks.end()) {
+                            if (southIt->second.isActive) {
+                                updateMesh(southIt->second);
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -1348,11 +1408,12 @@ void processKey() {
     }
     else {
         glm::vec3 dPos = glm::vec3(0.0, 0.0, 0.0);
+
         if (camera.forwardPressed) {
-            dPos += glm::normalize(glm::vec3(camera.Front.x, 0.0f, camera.Front.z)) * camera.MovementSpeed * deltaTime;
+            dPos += camera.WorldForward * camera.MovementSpeed * deltaTime;
         }
         if (camera.backwardPressed) {
-            dPos += glm::normalize(glm::vec3(camera.Front.x, 0.0f, camera.Front.z)) * -camera.MovementSpeed * deltaTime;
+            dPos += camera.WorldForward * -camera.MovementSpeed * deltaTime;
         }
         if (camera.rightPressed) {
             dPos += glm::normalize(glm::vec3(camera.Right.x, 0.0f, camera.Right.z)) * camera.MovementSpeed * deltaTime;

@@ -32,6 +32,7 @@ public:
     glm::vec3 Up;
     glm::vec3 Right;
     glm::vec3 WorldUp;
+    glm::vec3 WorldForward;
     // euler Angles
     float Yaw;
     float Pitch;
@@ -129,10 +130,10 @@ public:
         // make sure that when pitch is out of bounds, screen doesn't get flipped
         if (constrainPitch)
         {
-            if (Pitch > 89.0f)
-                Pitch = 89.0f;
-            if (Pitch < -89.0f)
-                Pitch = -89.0f;
+            if (Pitch > 90.0f)
+                Pitch = 90.0f;
+            if (Pitch < -90.0f)
+                Pitch = -90.0f;
         }
 
         // update Front, Right and Up Vectors using the updated Euler angles
@@ -160,8 +161,14 @@ private:
         front.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
         Front = glm::normalize(front);
         // also re-calculate the Right and Up vector
-        Right = glm::normalize(glm::cross(Front, WorldUp));  // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
+        Right = glm::vec3(-sin(glm::radians(Yaw)), 0.0, cos(glm::radians(Yaw)));
         Up = glm::normalize(glm::cross(Right, Front));
+
+        // When looking straight up/down we DON'T want the forward vector to be <0,-1,0>
+        // which results in zero distance in the XZ plane.
+        //     WorldForward = glm::normalize(glm::cross(camera.Up,camera.Right));
+        // We instead mirror Minecraft's movement system which completely ignores pitch.
+        WorldForward = glm::vec3(cos(glm::radians(Yaw)), 0.0, sin(glm::radians(Yaw))); // OPTIMIZATION: Don't need normalize()
     }
 };
 #endif
